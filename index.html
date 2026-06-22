@@ -635,7 +635,9 @@ const STORAGE_KEYS = {
   rotation: 'fb50_rotation_index',
   currentWod: 'fb50_current_wod',
   currentLog: 'fb50_current_log',
-  shuffleCount: 'fb50_shuffle_count'
+  shuffleCount: 'fb50_shuffle_count',
+  githubToken: 'fb50_github_token',
+  githubSha: 'fb50_github_sha'
 };
 
 function getSettings() {
@@ -726,6 +728,189 @@ function getShuffleCount() {
 
 function setShuffleCount(n) {
   localStorage.setItem(STORAGE_KEYS.shuffleCount, String(n));
+}
+
+// ============================================================
+// GITHUB SYNC
+// ============================================================
+
+const GH_REPO = 'jerelaph/fitby50';
+const GH_DATA_PATH = 'data/workouts.json';
+const GH_API = 'https://api.github.com';
+
+function getGitHubToken() {
+  return localStorage.getItem(STORAGE_KEYS.githubToken) || '';
+}
+
+function setGitHubToken(token) {
+  localStorage.setItem(STORAGE_KEYS.githubToken, token.trim());
+}
+
+function getGitHubSha() {
+  return localStorage.getItem(STORAGE_KEYS.githubSha) || null;
+}
+
+function setGitHubSha(sha) {
+  if (sha) localStorage.setItem(STORAGE_KEYS.githubSha, sha);
+  else localStorage.removeItem(STORAGE_KEYS.githubSha);
+}
+
+async function syncToGitHub(silent) {
+  const token = getGitHubToken();
+  if (!token) return;
+
+  try {
+    const syncData = {
+      settings: getSettings(),
+      history: getHistory(),
+      rotationIndex: getRotationIndex(),
+      lastSync: new Date().toISOString(),
+      version: 1
+    };
+
+    const jsonStr = JSON.stringify(syncData, null, 2);
+    const content = btoa(unescape(encodeURIComponent(jsonStr)));
+
+    // Get current SHA (needed for updates)
+    let sha = getGitHubSha();
+    if (!sha) {
+      try {
+        const getResp = await fetch(`${GH_API}/repos/${GH_REPO}/contents/${GH_DATA_PATH}`, {
+          headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+        if (getResp.ok) {
+          const d = await getResp.json();
+          sha = d.sha;
+        }
+      } catch(e) {}
+    }
+
+    const body = {
+      message: `Sync ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+      content: content
+    };
+    if (sha) body.sha = sha;
+
+    const putResp = await fetch(`${GH_API}/repos/${GH_REPO}/contents/${GH_DATA_PATH}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (putResp.ok) {
+      const result = await putResp.json();
+      setGitHubSha(result.content.sha);
+      if (!silent) showToast('Synced to GitHub ✓');
+      updateSyncStatus('success');
+    } else {
+      // SHA mismatch — re-fetch and retry once
+      if (putResp.status === 409 || putResp.status === 422) {
+        setGitHubSha(null);
+        if (!silent) showToast('Retrying sync...');
+        return syncToGitHub(silent);
+      }
+      const err = await putResp.json().catch(() => ({}));
+      if (!silent) showToast('Sync failed: ' + (err.message || putResp.status));
+      updateSyncStatus('error');
+    }
+  } catch(e) {
+    if (!silent) showToast('Sync error: ' + e.message);
+    updateSyncStatus('error');
+  }
+}
+
+async function pullFromGitHub(silent) {
+  const token = getGitHubToken();
+  if (!token) return false;
+
+  try {
+    const resp = await fetch(`${GH_API}/repos/${GH_REPO}/contents/${GH_DATA_PATH}`, {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+
+    if (!resp.ok) {
+      if (resp.status === 404) {
+        // No data file yet — that's fine
+        return false;
+      }
+      return false;
+    }
+
+    const data = await resp.json();
+    setGitHubSha(data.sha);
+
+    const decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+    const syncData = JSON.parse(decoded);
+
+    if (!syncData.history) return false;
+
+    // Merge histories: keep the most recent version of each date+dayType
+    const localHistory = getHistory();
+    const merged = new Map();
+
+    // Add local entries first
+    localHistory.forEach(h => merged.set(h.date + '|' + h.dayType, h));
+
+    // Remote entries override if they have a newer completedAt, otherwise skip
+    let newCount = 0;
+    syncData.history.forEach(rh => {
+      const key = rh.date + '|' + rh.dayType;
+      if (!merged.has(key)) {
+        merged.set(key, rh);
+        newCount++;
+      }
+    });
+
+    const sortedHistory = Array.from(merged.values()).sort((a, b) => b.date.localeCompare(a.date));
+    saveHistory(sortedHistory);
+
+    // Pull settings + rotation if this device has no history (fresh install)
+    if (localHistory.length === 0 && syncData.settings) {
+      saveSettings(syncData.settings);
+      if (syncData.rotationIndex !== undefined) setRotationIndex(syncData.rotationIndex);
+    }
+
+    if (newCount > 0 && !silent) {
+      showToast(`Pulled ${newCount} workout(s) from GitHub`);
+    }
+    updateSyncStatus('success');
+    return newCount > 0;
+  } catch(e) {
+    console.log('GitHub pull failed:', e);
+    updateSyncStatus('error');
+    return false;
+  }
+}
+
+function updateSyncStatus(status) {
+  const el = document.getElementById('gh-sync-status');
+  if (!el) return;
+  if (status === 'success') {
+    el.textContent = 'Last sync: ' + new Date().toLocaleTimeString();
+    el.style.color = 'var(--success)';
+  } else if (status === 'error') {
+    el.textContent = 'Sync failed';
+    el.style.color = 'var(--danger)';
+  } else {
+    el.textContent = 'Syncing...';
+    el.style.color = 'var(--text3)';
+  }
+}
+
+async function manualSync() {
+  const token = getGitHubToken();
+  if (!token) {
+    showToast('Enter a GitHub token first');
+    return;
+  }
+  showToast('Syncing...');
+  await pullFromGitHub(true);
+  await syncToGitHub(false);
+  renderHistory();
 }
 
 function shuffleArray(arr, rng) {
@@ -1929,6 +2114,9 @@ function saveLog() {
   }
 
   showToast('Log saved!');
+
+  // Auto-sync to GitHub if token configured
+  syncToGitHub(true);
 }
 
 // ============================================================
@@ -2101,10 +2289,36 @@ function renderSettings() {
     </div>
 
     <div class="setting-group">
+      <div class="setting-group-title">GitHub Sync</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">
+        Auto-saves workout data to your GitHub repo as JSON. Create a <a href="https://github.com/settings/tokens/new?scopes=public_repo&description=FitBy50" target="_blank" style="color:var(--strength);">Personal Access Token</a> with "public_repo" scope.
+      </div>
+      <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+        <span class="setting-label">GitHub Token</span>
+        <input type="password" id="gh-token-input" value="${getGitHubToken() ? '••••••••' : ''}" placeholder="ghp_xxxxxxxxxxxx"
+          onfocus="if(this.value==='••••••••')this.value=getGitHubToken()"
+          onchange="setGitHubToken(this.value);this.value='••••••••';setGitHubSha(null);showToast('Token saved')"
+          style="width:100%;font-size:13px;font-family:monospace;">
+      </div>
+      <div id="gh-sync-status" style="font-size:12px;margin-top:8px;color:var(--text3);">
+        ${getGitHubToken() ? 'Token configured' : 'No token set'}
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="manualSync()" style="flex:1;">Sync Now</button>
+        <button class="btn btn-ghost btn-sm" onclick="pullFromGitHub(false).then(ok=>{if(ok)renderHistory();renderSettings()})" style="flex:1;">Pull Only</button>
+      </div>
+    </div>
+
+    <div class="setting-group">
       <div class="setting-group-title">Data</div>
       <div class="setting-row">
         <span class="setting-label">Workout History</span>
         <span style="color:var(--text3);font-size:14px;">${getHistory().length} workouts</span>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="exportData()" style="flex:1;">Export JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()" style="flex:1;">Import JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(this)">
       </div>
       <div style="margin-top:12px;">
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset All Data</button>
@@ -2112,7 +2326,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.0
+      FitBy50 v1.1
     </div>
   `;
 }
@@ -2188,6 +2402,64 @@ function confirmReset() {
 }
 
 // ============================================================
+// EXPORT / IMPORT
+// ============================================================
+
+function exportData() {
+  const data = {
+    settings: getSettings(),
+    history: getHistory(),
+    rotationIndex: getRotationIndex(),
+    exported: new Date().toISOString(),
+    version: 1
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fitby50-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported backup file');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.history || !Array.isArray(data.history)) {
+        showToast('Invalid backup file');
+        return;
+      }
+      showConfirm('Import Data', `Import ${data.history.length} workouts? This will merge with existing data.`, (ok) => {
+        if (ok) {
+          const local = getHistory();
+          const merged = new Map();
+          local.forEach(h => merged.set(h.date + '|' + h.dayType, h));
+          data.history.forEach(h => {
+            const key = h.date + '|' + h.dayType;
+            if (!merged.has(key)) merged.set(key, h);
+          });
+          const sorted = Array.from(merged.values()).sort((a, b) => b.date.localeCompare(a.date));
+          saveHistory(sorted);
+          if (data.settings) saveSettings(data.settings);
+          if (data.rotationIndex !== undefined) setRotationIndex(data.rotationIndex);
+          showToast(`Imported — ${sorted.length} total workouts`);
+          renderSettings();
+        }
+      });
+    } catch(err) {
+      showToast('Error reading file');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
 // TOAST
 // ============================================================
 
@@ -2225,7 +2497,7 @@ document.querySelectorAll('.day-btn').forEach(btn => {
 // INIT
 // ============================================================
 
-function init() {
+async function init() {
   // Set initial day type based on actual day
   const today = new Date();
   const dow = today.getDay();
@@ -2238,6 +2510,13 @@ function init() {
   });
 
   renderToday();
+
+  // Pull from GitHub on startup (non-blocking)
+  if (getGitHubToken()) {
+    pullFromGitHub(true).then(changed => {
+      if (changed) renderToday();
+    });
+  }
 }
 
 init();
