@@ -21,6 +21,7 @@
   --metcon: #D85A30;
   --strengthcon: #1D9E75;
   --hiit: #E24B4A;
+  --recovery: #5BB89A;
   --caution: #E89A3C;
   --success: #34C759;
   --danger: #FF3B30;
@@ -111,6 +112,7 @@ input[type="number"] { width: 90px; text-align: center; }
 .card-metcon { border-left-color: var(--metcon); }
 .card-strengthcon { border-left-color: var(--strengthcon); }
 .card-hiit { border-left-color: var(--hiit); }
+.card-recovery { border-left-color: var(--recovery); }
 
 .card-label {
   font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
@@ -122,6 +124,7 @@ input[type="number"] { width: 90px; text-align: center; }
 .label-metcon { color: var(--metcon); }
 .label-strengthcon { color: var(--strengthcon); }
 .label-hiit { color: var(--hiit); }
+.label-recovery { color: var(--recovery); }
 
 .card-title {
   font-size: 17px; font-weight: 700; margin-bottom: 4px;
@@ -177,6 +180,7 @@ input[type="number"] { width: 90px; text-align: center; }
 .btn-metcon { background: var(--metcon); color: #fff; }
 .btn-strengthcon { background: var(--strengthcon); color: #fff; }
 .btn-hiit { background: var(--hiit); color: #fff; }
+.btn-recovery { background: var(--recovery); color: #fff; }
 .btn-success { background: var(--success); color: #fff; }
 .btn-danger { background: var(--danger); color: #fff; }
 .btn-ghost {
@@ -190,9 +194,9 @@ input[type="number"] { width: 90px; text-align: center; }
   display: flex; gap: 6px; margin-bottom: 16px;
 }
 .day-btn {
-  flex: 1; padding: 10px 6px; border-radius: var(--radius-sm);
+  flex: 1; padding: 10px 4px; border-radius: var(--radius-sm);
   background: var(--bg3); color: var(--text2);
-  font-size: 13px; font-weight: 600; text-align: center;
+  font-size: 12px; font-weight: 600; text-align: center;
   transition: all 0.15s;
 }
 .day-btn.active { background: var(--strength); color: #fff; }
@@ -456,6 +460,7 @@ input[type="number"] { width: 90px; text-align: center; }
       <button class="day-btn active" data-day="weekday">Weekday</button>
       <button class="day-btn" data-day="saturday">Saturday</button>
       <button class="day-btn" data-day="sunday">Sunday</button>
+      <button class="day-btn" data-day="recovery">Recovery</button>
     </div>
     <div id="rotation-display" class="rotation-indicator"></div>
     <div id="wod-content"></div>
@@ -999,10 +1004,100 @@ function generateWod(dayType, dateStr) {
     wod = generateWeekday(wod, settings, rotIdx, rng);
   } else if (dayType === 'saturday') {
     wod = generateSaturday(wod, settings, rotIdx, rng);
+  } else if (dayType === 'recovery') {
+    wod = generateRecovery(wod, settings, rng);
   } else {
     wod = generateSunday(wod, settings, rng);
   }
 
+  return wod;
+}
+
+// ============================================================
+// RECOVERY DAY
+// ============================================================
+
+const RECOVERY_MOBILITY = [
+  'Cat-Cow', 'World\'s Greatest Stretch', 'Pigeon Stretch',
+  '90/90 Hip Switch', 'Thoracic Rotation', 'Supine Scorpion',
+  'Couch Stretch', 'Banded Shoulder Pass-Through',
+  'Leg Swing (F/B)', 'Leg Swing (L/R)', 'Ankle Circles',
+  'Deep Squat Hold', 'Seated Figure-4', 'Child\'s Pose'
+];
+
+const RECOVERY_CARDIO = [
+  {
+    name: 'Incline Treadmill Walk',
+    format: '40 min — Progressive Incline',
+    protocol: [
+      { label: 'Min 0–10', detail: '3.5 mph @ 6.0% incline' },
+      { label: 'Min 10–20', detail: '3.5 mph @ 8.0% incline' },
+      { label: 'Min 20–30', detail: '3.5 mph @ 10.0% incline' },
+      { label: 'Min 30–40', detail: '3.5 mph @ 12.0% incline' }
+    ],
+    duration: 40,
+    equipment: 'all'
+  },
+  {
+    name: 'Rowing — Steady State',
+    format: '30 min — Moderate Pace',
+    protocol: [
+      { label: 'Pace', detail: '22–26 SPM, conversational effort' },
+      { label: 'Focus', detail: 'Full leg drive, relaxed grip' }
+    ],
+    duration: 30,
+    equipment: 'ymca'
+  },
+  {
+    name: 'Assault Bike — Easy Spin',
+    format: '30 min — Zone 2',
+    protocol: [
+      { label: 'Effort', detail: 'Steady ~50-60 RPM, nose-breathing pace' },
+      { label: 'Focus', detail: 'Keep heart rate 130-150 BPM range' }
+    ],
+    duration: 30,
+    equipment: 'all'
+  },
+  {
+    name: 'Outdoor Walk',
+    format: '40–60 min — Easy Pace',
+    protocol: [
+      { label: 'Terrain', detail: 'Hills if available, otherwise flat' },
+      { label: 'Effort', detail: 'Conversational pace, enjoy the fresh air' }
+    ],
+    duration: 45,
+    equipment: 'all'
+  }
+];
+
+function generateRecovery(wod, settings, rng) {
+  // Mobility warm-up (5 min)
+  const mobilityMoves = pickN(RECOVERY_MOBILITY, 5, rng);
+  wod.sections.push({
+    type: 'recovery-warmup',
+    label: 'MOBILITY',
+    format: '5 min — :45 each, easy flow',
+    exercises: mobilityMoves.map(name => ({ name, reps: ':45' })),
+    work: 45,
+    rest: 5,
+    rounds: 1
+  });
+
+  // Pick cardio — filter by equipment, then random
+  const available = RECOVERY_CARDIO.filter(c =>
+    c.equipment === 'all' || c.equipment === settings.equipment
+  );
+  const cardio = available[Math.floor(rng() * available.length)];
+
+  wod.sections.push({
+    type: 'recovery-cardio',
+    label: cardio.name.toUpperCase(),
+    format: cardio.format,
+    protocol: cardio.protocol,
+    duration: cardio.duration
+  });
+
+  wod.shuffleCount = getShuffleCount();
   return wod;
 }
 
@@ -1307,7 +1402,7 @@ function renderWodContent(wod) {
   // Section progress dots
   html += '<div class="section-progress">';
   wod.sections.forEach(s => {
-    const colorMap = { warmup: 'var(--warmup)', strength: 'var(--strength)', core: 'var(--core)', metcon: 'var(--metcon)', strengthcon: 'var(--strengthcon)', hiit: 'var(--hiit)', glute: 'var(--core)' };
+    const colorMap = { warmup: 'var(--warmup)', strength: 'var(--strength)', core: 'var(--core)', metcon: 'var(--metcon)', strengthcon: 'var(--strengthcon)', hiit: 'var(--hiit)', glute: 'var(--core)', 'recovery-warmup': 'var(--recovery)', 'recovery-cardio': 'var(--recovery)' };
     html += `<div class="section-dot" style="background:${colorMap[s.type] || 'var(--bg4)'}"></div>`;
   });
   html += '</div>';
@@ -1321,7 +1416,7 @@ function renderWodContent(wod) {
 
 function renderSection(section, si) {
   const settings = getSettings();
-  const typeClass = section.type === 'glute' ? 'core' : section.type;
+  const typeClass = section.type === 'glute' ? 'core' : section.type.startsWith('recovery') ? 'recovery' : section.type;
   let html = `<div class="card card-${typeClass}">`;
   html += `<div class="card-label label-${typeClass}">${section.label}</div>`;
 
@@ -1422,6 +1517,29 @@ function renderSection(section, si) {
     });
     html += '</ul>';
     html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length})">START TIMER</button></div>`;
+  }
+
+  else if (section.type === 'recovery-warmup') {
+    html += `<div class="card-meta">${section.format}</div>`;
+    html += '<ul class="exercise-list">';
+    section.exercises.forEach(e => {
+      html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
+    });
+    html += '</ul>';
+    html += `<div style="margin-top:12px"><button class="btn btn-recovery btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length})">START TIMER</button></div>`;
+  }
+
+  else if (section.type === 'recovery-cardio') {
+    html += `<div class="card-meta">${section.format}</div>`;
+    html += '<div style="margin-top:12px;">';
+    section.protocol.forEach(step => {
+      html += `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bg3);">
+        <span style="font-weight:600;color:var(--recovery);">${step.label}</span>
+        <span style="color:var(--text2);font-size:14px;">${step.detail}</span>
+      </div>`;
+    });
+    html += '</div>';
+    html += `<div style="margin-top:12px"><button class="btn btn-recovery btn-sm" onclick="openTimerConfig('forTime', ${section.duration * 60}, 0, 0, 0)">START ${section.duration} MIN TIMER</button></div>`;
   }
 
   html += '</div>';
@@ -2171,8 +2289,8 @@ function renderHistory() {
   html += '<div style="margin-top:16px;font-size:13px;color:var(--text3);font-weight:600;margin-bottom:8px;">PAST WORKOUTS</div>';
 
   history.forEach((h, i) => {
-    const dayColors = { weekday: 'var(--strength)', saturday: 'var(--strengthcon)', sunday: 'var(--hiit)' };
-    const dayLabels = { weekday: 'WEEKDAY', saturday: 'SATURDAY', sunday: 'SUNDAY' };
+    const dayColors = { weekday: 'var(--strength)', saturday: 'var(--strengthcon)', sunday: 'var(--hiit)', recovery: 'var(--recovery)' };
+    const dayLabels = { weekday: 'WEEKDAY', saturday: 'SATURDAY', sunday: 'SUNDAY', recovery: 'RECOVERY' };
     const completed = h.exercises.filter(e => e.checked).length;
     const total = h.exercises.length;
 
@@ -2326,7 +2444,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.1
+      FitBy50 v1.2
     </div>
   `;
 }
