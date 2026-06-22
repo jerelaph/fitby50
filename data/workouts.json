@@ -1,0 +1,19 @@
+{
+  "settings": {
+    "name": "Jeremy",
+    "bodyWeight": 185,
+    "equipment": "home",
+    "herniaMode": true,
+    "oneRM": {
+      "backSquat": 275,
+      "benchPress": 225,
+      "deadlift": 315,
+      "pushPress": 155,
+      "frontSquat": 225
+    }
+  },
+  "history": [],
+  "rotationIndex": 0,
+  "lastSync": "2026-06-22T18:25:47.119Z",
+  "version": 1
+}
