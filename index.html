@@ -270,6 +270,30 @@ input[type="number"] { width: 90px; text-align: center; }
 .timer-info {
   font-size: 14px; color: var(--text3); margin-bottom: 16px;
 }
+.timer-exercise-name {
+  font-size: 24px; font-weight: 800; color: var(--text);
+  margin-bottom: 4px; text-align: center;
+}
+.timer-exercise-rep {
+  font-size: 14px; color: var(--text3); margin-bottom: 12px;
+}
+.timer-exercise-list {
+  width: 100%; max-width: 320px; margin-bottom: 16px;
+  max-height: 160px; overflow-y: auto;
+}
+.timer-exercise-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 12px; font-size: 13px; border-radius: 6px; margin-bottom: 2px;
+}
+.timer-exercise-item.current {
+  background: rgba(255,255,255,0.08); font-weight: 700; color: var(--text);
+}
+.timer-exercise-item.done {
+  color: var(--text3); text-decoration: line-through; opacity: 0.5;
+}
+.timer-exercise-item .ex-reps {
+  color: var(--text3); font-size: 12px;
+}
 
 /* Log view */
 .log-item {
@@ -571,7 +595,10 @@ input[type="number"] { width: 90px; text-align: center; }
   <div class="timer-phase" id="timer-phase">WORK</div>
   <div class="timer-digits" id="timer-digits">0:00</div>
   <div class="timer-round" id="timer-round">Round 1 / 5</div>
+  <div class="timer-exercise-name" id="timer-exercise-name"></div>
+  <div class="timer-exercise-rep" id="timer-exercise-rep"></div>
   <div class="timer-info" id="timer-info"></div>
+  <div class="timer-exercise-list" id="timer-exercise-list"></div>
   <div class="timer-progress"><div class="timer-progress-bar" id="timer-progress-bar" style="width:0%;background:var(--success);"></div></div>
   <div class="timer-controls">
     <div>
@@ -1542,7 +1569,7 @@ function renderSection(section, si) {
       html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
     });
     html += '</ul>';
-    html += `<div style="margin-top:12px"><button class="btn btn-warmup btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length})">START TIMER</button></div>`;
+    html += `<div style="margin-top:12px"><button class="btn btn-warmup btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'strength') {
@@ -1572,7 +1599,7 @@ function renderSection(section, si) {
       html += '</ul>';
     }
 
-    html += `<div style="margin-top:12px"><button class="btn btn-strength btn-sm" onclick="openTimerConfig('emom', ${section.formatDetail.time}, 0, ${section.formatDetail.rounds}, 0)">START TIMER</button></div>`;
+    html += `<div style="margin-top:12px"><button class="btn btn-strength btn-sm" onclick="openTimerConfig('emom', ${section.formatDetail.time}, 0, ${section.formatDetail.rounds}, 0, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'core') {
@@ -1582,7 +1609,7 @@ function renderSection(section, si) {
       html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
     });
     html += '</ul>';
-    html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length})">START TIMER</button></div>`;
+    html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'metcon') {
@@ -1595,11 +1622,11 @@ function renderSection(section, si) {
     html += '</ul>';
     const tc = section.timerConfig;
     if (tc.mode === 'amrap') {
-      html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('amrap', ${tc.duration}, 0, 0, 0)">START TIMER</button></div>`;
+      html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('amrap', ${tc.duration}, 0, 0, 0, ${si})">START TIMER</button></div>`;
     } else if (tc.mode === 'forTime') {
-      html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('forTime', ${tc.cap}, 0, ${tc.rounds || 0}, 0)">START TIMER</button></div>`;
+      html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('forTime', ${tc.cap}, 0, ${tc.rounds || 0}, 0, ${si})">START TIMER</button></div>`;
     } else if (tc.mode === 'emom') {
-      html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('emom', ${tc.interval}, 0, ${Math.floor(tc.duration / tc.interval)}, 0)">START TIMER</button></div>`;
+      html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('emom', ${tc.interval}, 0, ${Math.floor(tc.duration / tc.interval)}, 0, ${si})">START TIMER</button></div>`;
     }
   }
 
@@ -1611,7 +1638,7 @@ function renderSection(section, si) {
       html += `<li>${e.name} ${flagged ? '<span class="caution-badge">CAUTION</span>' : ''}<span class="exercise-rep">${e.reps}</span></li>`;
     });
     html += '</ul>';
-    html += `<div style="margin-top:12px"><button class="btn btn-strengthcon btn-sm" onclick="openTimerConfig('forTime', ${section.cap}, 0, ${section.rounds}, 0)">START TIMER</button></div>`;
+    html += `<div style="margin-top:12px"><button class="btn btn-strengthcon btn-sm" onclick="openTimerConfig('forTime', ${section.cap}, 0, ${section.rounds}, 0, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'hiit') {
@@ -1621,7 +1648,7 @@ function renderSection(section, si) {
       html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
     });
     html += '</ul>';
-    html += `<div style="margin-top:12px"><button class="btn btn-hiit btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length})">START TIMER</button></div>`;
+    html += `<div style="margin-top:12px"><button class="btn btn-hiit btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'glute') {
@@ -1631,7 +1658,7 @@ function renderSection(section, si) {
       html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
     });
     html += '</ul>';
-    html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length})">START TIMER</button></div>`;
+    html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'recovery-warmup') {
@@ -1641,7 +1668,7 @@ function renderSection(section, si) {
       html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
     });
     html += '</ul>';
-    html += `<div style="margin-top:12px"><button class="btn btn-recovery btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length})">START TIMER</button></div>`;
+    html += `<div style="margin-top:12px"><button class="btn btn-recovery btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'recovery-cardio') {
@@ -1654,7 +1681,7 @@ function renderSection(section, si) {
       </div>`;
     });
     html += '</div>';
-    html += `<div style="margin-top:12px"><button class="btn btn-recovery btn-sm" onclick="openTimerConfig('forTime', ${section.duration * 60}, 0, 0, 0)">START ${section.duration} MIN TIMER</button></div>`;
+    html += `<div style="margin-top:12px"><button class="btn btn-recovery btn-sm" onclick="openTimerConfig('forTime', ${section.duration * 60}, 0, 0, 0, ${si})">START ${section.duration} MIN TIMER</button></div>`;
   }
 
   html += '</div>';
@@ -1668,6 +1695,7 @@ function renderSection(section, si) {
 let timerState = null;
 let timerInterval = null;
 let audioCtx = null;
+let timerExercises = []; // [{name, reps}] for current timer section
 
 function getAudioCtx() {
   if (!audioCtx) {
@@ -1718,9 +1746,20 @@ function vibrate(pattern) {
   }
 }
 
-function openTimerConfig(mode, param1, param2, param3, param4) {
+function openTimerConfig(mode, param1, param2, param3, param4, sectionIdx) {
   // Initialize audio context on first user interaction
   getAudioCtx();
+
+  // Grab exercises from the current WOD section
+  timerExercises = [];
+  if (currentWod && typeof sectionIdx === 'number' && currentWod.sections[sectionIdx]) {
+    const sec = currentWod.sections[sectionIdx];
+    if (sec.exercises) {
+      timerExercises = sec.exercises.map(e => ({ name: e.name, reps: e.reps || '' }));
+    } else if (sec.protocol) {
+      timerExercises = sec.protocol.map(p => ({ name: p.label, reps: p.detail || '' }));
+    }
+  }
 
   const sheet = document.getElementById('timer-config-sheet');
   let html = '';
@@ -1807,10 +1846,11 @@ function startIntervalTimer() {
     work: work, rest: rest,
     totalRounds: rounds, totalStations: totalStations,
     currentRound: 1, currentStation: 1,
-    phase: 'getReady', // getReady -> work -> rest -> work -> rest ... next round
-    secondsLeft: 10, // 10 sec get ready
+    phase: 'getReady',
+    secondsLeft: 10,
     totalSeconds: 10,
-    paused: false, finished: false
+    paused: false, finished: false,
+    exercises: [...timerExercises]
   };
 
   showTimerOverlay();
@@ -1829,7 +1869,8 @@ function startEmomTimer() {
     phase: 'getReady',
     secondsLeft: 10,
     totalSeconds: 10,
-    paused: false, finished: false
+    paused: false, finished: false,
+    exercises: [...timerExercises]
   };
 
   showTimerOverlay();
@@ -1847,7 +1888,8 @@ function startAmrapTimer() {
     phase: 'getReady',
     secondsLeft: 10,
     totalSeconds: 10,
-    paused: false, finished: false
+    paused: false, finished: false,
+    exercises: [...timerExercises]
   };
 
   showTimerOverlay();
@@ -1865,7 +1907,8 @@ function startForTimeTimer() {
     phase: 'getReady',
     secondsLeft: 10,
     totalSeconds: 10,
-    paused: false, finished: false
+    paused: false, finished: false,
+    exercises: [...timerExercises]
   };
 
   showTimerOverlay();
@@ -2050,6 +2093,9 @@ function updateTimerDisplay() {
   const infoEl = document.getElementById('timer-info');
   const progressBar = document.getElementById('timer-progress-bar');
   const pauseBtn = document.getElementById('timer-btn-pause');
+  const exNameEl = document.getElementById('timer-exercise-name');
+  const exRepEl = document.getElementById('timer-exercise-rep');
+  const exListEl = document.getElementById('timer-exercise-list');
 
   pauseBtn.textContent = s.paused ? '▶' : '||';
 
@@ -2121,6 +2167,51 @@ function updateTimerDisplay() {
     const pct = (s.elapsed / s.cap) * 100;
     progressBar.style.width = pct + '%';
     progressBar.style.background = 'var(--metcon)';
+  }
+
+  // --- Exercise display ---
+  const exs = s.exercises || [];
+  if (exs.length === 0) {
+    exNameEl.textContent = '';
+    exRepEl.textContent = '';
+    exListEl.innerHTML = '';
+  } else if (s.mode === 'interval' && exs.length > 0) {
+    // For interval mode: highlight current station's exercise
+    const stationIdx = (s.currentStation - 1) % exs.length;
+    const current = exs[stationIdx];
+    if (s.phase === 'getReady') {
+      exNameEl.textContent = 'First up: ' + exs[0].name;
+      exRepEl.textContent = exs[0].reps || '';
+    } else if (s.phase === 'work') {
+      exNameEl.textContent = current.name;
+      exRepEl.textContent = current.reps || '';
+    } else if (s.phase === 'rest') {
+      const nextIdx = s.currentStation % exs.length;
+      exNameEl.textContent = '→ Next: ' + exs[nextIdx].name;
+      exRepEl.textContent = '';
+    }
+    // Show exercise list with current highlighted
+    let listHtml = '';
+    exs.forEach((e, i) => {
+      const cls = i === stationIdx && s.phase !== 'getReady' ? 'current' : '';
+      listHtml += `<div class="timer-exercise-item ${cls}"><span>${e.name}</span><span class="ex-reps">${e.reps || ''}</span></div>`;
+    });
+    exListEl.innerHTML = listHtml;
+  } else {
+    // For AMRAP, forTime, EMOM: show full exercise list
+    exNameEl.textContent = '';
+    exRepEl.textContent = '';
+    let listHtml = '';
+    exs.forEach(e => {
+      listHtml += `<div class="timer-exercise-item"><span>${e.name}</span><span class="ex-reps">${e.reps || ''}</span></div>`;
+    });
+    exListEl.innerHTML = listHtml;
+  }
+
+  if (s.finished) {
+    exNameEl.textContent = '';
+    exRepEl.textContent = '';
+    exListEl.innerHTML = '';
   }
 }
 
@@ -2785,7 +2876,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.4
+      FitBy50 v1.5
     </div>
   `;
 }
