@@ -419,6 +419,40 @@ input[type="number"] { width: 90px; text-align: center; }
   background: var(--bg4); transition: background 0.3s;
 }
 
+/* Weekly activity tracker */
+.week-tracker {
+  background: var(--bg2); border-radius: var(--radius);
+  padding: 12px 16px; margin-bottom: 16px;
+}
+.week-days {
+  display: flex; gap: 4px; margin-bottom: 8px;
+}
+.week-day {
+  flex: 1; text-align: center; font-size: 10px; font-weight: 700;
+  color: var(--text3); letter-spacing: 0.5px;
+}
+.week-dot {
+  width: 100%; aspect-ratio: 1; border-radius: 50%;
+  background: var(--bg4); margin: 4px auto 2px; max-width: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: transparent; transition: all 0.2s;
+}
+.week-dot.active { color: #fff; font-weight: 800; }
+.week-dot.today { box-shadow: 0 0 0 2px var(--text3); }
+.week-goals {
+  display: flex; gap: 8px; margin-top: 8px;
+}
+.week-goal {
+  flex: 1; display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  padding: 6px 8px; background: var(--bg3); border-radius: var(--radius-sm);
+}
+.week-goal.hit { color: var(--success); background: rgba(52,199,89,0.1); }
+.week-goal-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--bg4); flex-shrink: 0;
+}
+.week-goal.hit .week-goal-dot { background: var(--success); }
+
 /* Empty state */
 .empty-state {
   text-align: center; padding: 60px 20px; color: var(--text3);
@@ -456,6 +490,7 @@ input[type="number"] { width: 90px; text-align: center; }
       </div>
       <div id="equip-badge" class="equip-badge home">HOME</div>
     </div>
+    <div id="week-tracker"></div>
     <div class="day-selector" id="day-selector">
       <button class="day-btn active" data-day="weekday">Weekday</button>
       <button class="day-btn" data-day="saturday">Saturday</button>
@@ -649,6 +684,7 @@ function getSettings() {
   const defaults = {
     name: 'Jeremy',
     bodyWeight: 185,
+    height: 72,
     equipment: 'home',
     herniaMode: true,
     oneRM: {
@@ -1381,8 +1417,75 @@ function renderToday() {
     saveCurrentWod(currentWod);
   }
 
+  renderWeekTracker();
   renderRotation();
   renderWodContent(currentWod);
+}
+
+function renderWeekTracker() {
+  const el = document.getElementById('week-tracker');
+  if (!el) return;
+  const history = getHistory();
+  const today = new Date();
+
+  // Get Monday of current week
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((dow + 6) % 7));
+
+  const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const dayColors = {
+    weekday: 'var(--strength)', saturday: 'var(--strengthcon)',
+    sunday: 'var(--hiit)', recovery: 'var(--recovery)'
+  };
+  const intenseDayTypes = ['weekday', 'saturday', 'sunday']; // non-recovery
+
+  let activeCount = 0;
+  let intenseCount = 0;
+  let daysHtml = '';
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const isToday = dateStr === today.toISOString().slice(0, 10);
+
+    const workout = history.find(h => h.date === dateStr);
+    let dotStyle = '';
+    let dotClass = isToday ? 'today' : '';
+    let checkMark = '';
+
+    if (workout) {
+      const color = dayColors[workout.dayType] || 'var(--bg4)';
+      dotStyle = `background:${color};`;
+      dotClass += ' active';
+      checkMark = '✓';
+      activeCount++;
+      if (intenseDayTypes.includes(workout.dayType)) intenseCount++;
+    }
+
+    daysHtml += `<div class="week-day">
+      <div class="week-dot ${dotClass}" style="${dotStyle}">${checkMark}</div>
+      ${dayLabels[i]}
+    </div>`;
+  }
+
+  const activeGoal = activeCount >= 3;
+  const intenseGoal = intenseCount >= 3;
+
+  el.innerHTML = `<div class="week-tracker">
+    <div class="week-days">${daysHtml}</div>
+    <div class="week-goals">
+      <div class="week-goal ${activeGoal ? 'hit' : ''}">
+        <div class="week-goal-dot"></div>
+        ${activeCount}/3 Active
+      </div>
+      <div class="week-goal ${intenseGoal ? 'hit' : ''}">
+        <div class="week-goal-dot"></div>
+        ${intenseCount}/3 Intense
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderRotation() {
@@ -2043,6 +2146,22 @@ function renderLog() {
 
   let html = `<div style="font-size:13px;color:var(--text3);margin-bottom:12px;">${wod.date} — ${wod.dayType.charAt(0).toUpperCase() + wod.dayType.slice(1)}</div>`;
 
+  // Body weight log
+  const lastWeight = getSettings().bodyWeight;
+  const logWeight = log.logBodyWeight || lastWeight;
+  html += `<div class="card" style="border-left-color:var(--recovery);margin-bottom:12px;padding:12px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--recovery);letter-spacing:1px;">WEIGH-IN</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">Optional — updates your profile</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="number" id="log-bodyweight" value="${logWeight}" style="width:70px;text-align:center;" onchange="updateLogBodyWeight(this.value)">
+        <span style="color:var(--text3);font-size:13px;">lb</span>
+      </div>
+    </div>
+  </div>`;
+
   log.exercises.forEach((ex, i) => {
     html += `<div class="log-item">
       <button class="log-check ${ex.checked ? 'checked' : ''}" onclick="toggleLogCheck(${i})">✓</button>
@@ -2126,7 +2245,8 @@ function buildLogFromWod(wod) {
     date: wod.date,
     dayType: wod.dayType,
     rotationIndex: wod.rotationIndex,
-    exercises: exercises
+    exercises: exercises,
+    logBodyWeight: getSettings().bodyWeight
   };
 }
 
@@ -2149,6 +2269,13 @@ function updateLogReps(idx, val) {
   const log = getCurrentLog();
   if (!log) return;
   log.exercises[idx].reps = parseInt(val) || 0;
+  saveCurrentLog(log);
+}
+
+function updateLogBodyWeight(val) {
+  const log = getCurrentLog();
+  if (!log) return;
+  log.logBodyWeight = parseInt(val) || 0;
   saveCurrentLog(log);
 }
 
@@ -2175,8 +2302,16 @@ function logCurrentWorkout() {
     dayType: log.dayType,
     rotationIndex: log.rotationIndex,
     exercises: log.exercises,
+    bodyWeight: log.logBodyWeight || 0,
     completedAt: new Date().toISOString()
   });
+
+  // Update body weight in settings if logged
+  if (log.logBodyWeight && log.logBodyWeight > 0) {
+    const s = getSettings();
+    s.bodyWeight = log.logBodyWeight;
+    saveSettings(s);
+  }
 
   saveHistory(history);
 
@@ -2216,8 +2351,16 @@ function saveLog() {
     dayType: log.dayType,
     rotationIndex: log.rotationIndex,
     exercises: log.exercises,
+    bodyWeight: log.logBodyWeight || 0,
     completedAt: new Date().toISOString()
   });
+
+  // Update body weight in settings if logged
+  if (log.logBodyWeight && log.logBodyWeight > 0) {
+    const s = getSettings();
+    s.bodyWeight = log.logBodyWeight;
+    saveSettings(s);
+  }
 
   saveHistory(history);
 
@@ -2284,6 +2427,124 @@ function renderHistory() {
   });
   html += `<span class="rotation-label">Current: ${labels[ridx]}</span>`;
   html += '</div></div></div>';
+
+  // BMI Trend
+  const settings = getSettings();
+  const weightEntries = history.filter(h => h.bodyWeight > 0).slice(0, 10);
+  if (weightEntries.length > 0 || settings.height > 0) {
+    const currentBmi = (settings.bodyWeight / (settings.height * settings.height)) * 703;
+    html += '<div class="card" style="border-left-color:var(--recovery);margin-top:12px;">';
+    html += '<div class="card-label label-recovery">BODY METRICS</div>';
+    html += `<div style="display:flex;justify-content:space-between;padding:8px 0;">
+      <span style="color:var(--text2);">Current Weight</span>
+      <span style="font-weight:700;">${settings.bodyWeight} lb</span>
+    </div>`;
+    html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bg3);">
+      <span style="color:var(--text2);">BMI</span>
+      <span style="font-weight:700;">${currentBmi.toFixed(1)}</span>
+    </div>`;
+    if (weightEntries.length > 1) {
+      const oldest = weightEntries[weightEntries.length - 1].bodyWeight;
+      const newest = weightEntries[0].bodyWeight;
+      const diff = newest - oldest;
+      const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+      const color = diff > 0 ? 'var(--danger)' : diff < 0 ? 'var(--success)' : 'var(--text3)';
+      html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bg3);">
+        <span style="color:var(--text2);">Weight Trend (${weightEntries.length} logs)</span>
+        <span style="font-weight:700;color:${color};">${arrow} ${Math.abs(diff)} lb</span>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  // Weekly Volume (last 4 weeks)
+  const fourWeeksAgo = new Date();
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+  const fourWeeksStr = fourWeeksAgo.toISOString().slice(0, 10);
+  const recentHistory = history.filter(h => h.date >= fourWeeksStr);
+  if (recentHistory.length > 0) {
+    // Group by week
+    const weeks = {};
+    recentHistory.forEach(h => {
+      const d = new Date(h.date + 'T12:00:00');
+      const dow = d.getDay();
+      const mon = new Date(d);
+      mon.setDate(d.getDate() - ((dow + 6) % 7));
+      const weekKey = mon.toISOString().slice(0, 10);
+      if (!weeks[weekKey]) weeks[weekKey] = { workouts: 0, tonnage: 0, sets: 0 };
+      weeks[weekKey].workouts++;
+      h.exercises.filter(e => e.checked).forEach(e => {
+        weeks[weekKey].sets++;
+        if (e.weight > 0 && e.reps > 0) {
+          weeks[weekKey].tonnage += e.weight * e.reps;
+        }
+      });
+    });
+
+    html += '<div class="card" style="border-left-color:var(--core);margin-top:12px;">';
+    html += '<div class="card-label label-core">WEEKLY VOLUME</div>';
+    Object.keys(weeks).sort().reverse().forEach(weekKey => {
+      const w = weeks[weekKey];
+      const weekDate = new Date(weekKey + 'T12:00:00');
+      const label = weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bg3);">
+        <div>
+          <div style="font-weight:600;font-size:13px;">Wk of ${label}</div>
+          <div style="font-size:11px;color:var(--text3);">${w.workouts} workout${w.workouts > 1 ? 's' : ''} · ${w.sets} sets</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;font-size:14px;">${w.tonnage > 0 ? (w.tonnage / 1000).toFixed(1) + 'k' : '—'}</div>
+          <div style="font-size:10px;color:var(--text3);">lb tonnage</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Streak Counter
+  if (history.length > 0) {
+    // Count consecutive weeks with 3+ workouts
+    let streakWeeks = 0;
+    const now = new Date();
+    let checkDate = new Date(now);
+
+    // Start from current week
+    while (true) {
+      const dow = checkDate.getDay();
+      const monday = new Date(checkDate);
+      monday.setDate(checkDate.getDate() - ((dow + 6) % 7));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const monStr = monday.toISOString().slice(0, 10);
+      const sunStr = sunday.toISOString().slice(0, 10);
+
+      const weekWorkouts = history.filter(h => h.date >= monStr && h.date <= sunStr).length;
+
+      if (weekWorkouts >= 3) {
+        streakWeeks++;
+        checkDate.setDate(checkDate.getDate() - 7);
+      } else if (checkDate.toISOString().slice(0, 10) === monday.toISOString().slice(0, 10) && now.getDay() < 5) {
+        // Current week not over yet — don't break streak, just skip
+        checkDate.setDate(checkDate.getDate() - 7);
+      } else {
+        break;
+      }
+      if (streakWeeks > 52) break; // Safety
+    }
+
+    html += '<div class="card" style="border-left-color:var(--strength);margin-top:12px;">';
+    html += '<div class="card-label label-strength">CONSISTENCY</div>';
+    html += `<div style="display:flex;justify-content:space-between;padding:8px 0;">
+      <span style="color:var(--text2);">Week Streak (3+ workouts)</span>
+      <span style="font-weight:700;font-size:18px;">${streakWeeks} ${streakWeeks === 1 ? 'week' : 'weeks'}</span>
+    </div>`;
+    html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bg3);">
+      <span style="color:var(--text2);">Total Workouts</span>
+      <span style="font-weight:700;">${history.length}</span>
+    </div>`;
+    html += '</div>';
+  }
 
   // Past workouts
   html += '<div style="margin-top:16px;font-size:13px;color:var(--text3);font-weight:600;margin-bottom:8px;">PAST WORKOUTS</div>';
@@ -2383,6 +2644,15 @@ function renderSettings() {
         <span class="setting-label">Body Weight (lb)</span>
         <input type="number" value="${s.bodyWeight}" onchange="setSetting('bodyWeight', parseInt(this.value))" style="width:80px;">
       </div>
+      <div class="setting-row">
+        <span class="setting-label">Height</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" value="${Math.floor(s.height / 12)}" onchange="setHeight(parseInt(this.value), ${s.height % 12})" style="width:55px;" min="4" max="7">
+          <span style="color:var(--text3);font-size:13px;">ft</span>
+          <input type="number" value="${s.height % 12}" onchange="setHeight(${Math.floor(s.height / 12)}, parseInt(this.value))" style="width:55px;" min="0" max="11">
+          <span style="color:var(--text3);font-size:13px;">in</span>
+        </div>
+      </div>
     </div>
 
     <div class="setting-group">
@@ -2444,7 +2714,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.2
+      FitBy50 v1.3
     </div>
   `;
 }
@@ -2470,6 +2740,12 @@ function set1RM(key, val) {
 function setSetting(key, val) {
   const s = getSettings();
   s[key] = val;
+  saveSettings(s);
+}
+
+function setHeight(ft, inches) {
+  const s = getSettings();
+  s.height = (ft * 12) + (inches || 0);
   saveSettings(s);
 }
 
