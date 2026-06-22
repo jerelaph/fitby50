@@ -287,6 +287,18 @@ input[type="number"] { width: 90px; text-align: center; }
 .log-check.checked {
   background: var(--success); border-color: var(--success); color: #fff;
 }
+.log-check.failed {
+  background: var(--danger); border-color: var(--danger); color: #fff;
+}
+.log-fail-btn {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+  padding: 4px 8px; border-radius: 4px; background: none;
+  color: var(--text3); border: 1px solid var(--bg4); margin-top: 4px;
+  transition: all 0.15s;
+}
+.log-fail-btn.active {
+  background: rgba(255,59,48,0.15); color: var(--danger); border-color: var(--danger);
+}
 .log-exercise { flex: 1; }
 .log-exercise-name { font-size: 15px; font-weight: 600; }
 .log-exercise-detail { font-size: 12px; color: var(--text3); margin-top: 2px; }
@@ -2163,14 +2175,17 @@ function renderLog() {
   </div>`;
 
   log.exercises.forEach((ex, i) => {
-    html += `<div class="log-item">
-      <button class="log-check ${ex.checked ? 'checked' : ''}" onclick="toggleLogCheck(${i})">✓</button>
+    const failClass = ex.failed ? 'failed' : (ex.checked ? 'checked' : '');
+    html += `<div class="log-item" style="${ex.failed ? 'opacity:0.6;' : ''}">
+      <button class="log-check ${failClass}" onclick="toggleLogCheck(${i})">${ex.failed ? '✗' : '✓'}</button>
       <div class="log-exercise">
         <div class="log-exercise-name">${ex.name}</div>
         <div class="log-exercise-detail">${ex.section} — ${ex.prescription}</div>
+        ${ex.isMainLift && ex.round ? `<button class="log-fail-btn ${ex.failed ? 'active' : ''}" onclick="toggleFail(${i})">${ex.failed ? 'FAILED' : 'FAIL'}</button>` : ''}
       </div>`;
     if (ex.hasWeight) {
-      html += `<input type="number" class="log-weight-input" value="${ex.weight || ''}" placeholder="lb" onchange="updateLogWeight(${i}, this.value)">`;
+      const isR1MainLift = ex.isMainLift && ex.round === 1;
+      html += `<input type="number" class="log-weight-input" value="${ex.weight || ''}" placeholder="lb" onchange="${isR1MainLift ? `autoFillWeights(${i}, this.value)` : `updateLogWeight(${i}, this.value)`}">`;
     }
     if (ex.hasReps) {
       html += `<input type="number" class="log-reps-input" value="${ex.reps || ''}" placeholder="reps" onchange="updateLogReps(${i}, this.value)">`;
@@ -2253,7 +2268,14 @@ function buildLogFromWod(wod) {
 function toggleLogCheck(idx) {
   const log = getCurrentLog();
   if (!log) return;
-  log.exercises[idx].checked = !log.exercises[idx].checked;
+  const ex = log.exercises[idx];
+  if (ex.failed) {
+    // Clear fail state when clicking check
+    ex.failed = false;
+    ex.checked = false;
+  } else {
+    ex.checked = !ex.checked;
+  }
   saveCurrentLog(log);
   renderLog();
 }
@@ -2270,6 +2292,55 @@ function updateLogReps(idx, val) {
   if (!log) return;
   log.exercises[idx].reps = parseInt(val) || 0;
   saveCurrentLog(log);
+}
+
+function autoFillWeights(startIdx, val) {
+  const log = getCurrentLog();
+  if (!log) return;
+  const startWeight = parseInt(val) || 0;
+  if (startWeight <= 0) return;
+
+  const ex = log.exercises[startIdx];
+  const liftName = ex.name;
+
+  // Determine jump size based on lift category
+  // Squat/Deadlift = bigger jumps, Bench/Press = smaller
+  const bigLifts = ['BB Back Squat', 'BB Deadlift', 'BB Front Squat'];
+  const jump = bigLifts.includes(liftName) ? 10 : 5;
+
+  // Find all rounds of the same lift
+  let roundNum = 0;
+  for (let i = startIdx; i < log.exercises.length; i++) {
+    const e = log.exercises[i];
+    if (e.name === liftName && e.isMainLift && e.round) {
+      const w = startWeight + (roundNum * jump);
+      e.weight = Math.round(w / 5) * 5; // round to nearest 5
+      roundNum++;
+    } else if (e.isMainLift && e.name !== liftName) {
+      break; // different lift, stop
+    }
+  }
+
+  saveCurrentLog(log);
+  renderLog();
+  showToast(`Auto-filled: ${startWeight}lb +${jump}lb/round`);
+}
+
+function toggleFail(idx) {
+  const log = getCurrentLog();
+  if (!log) return;
+  const ex = log.exercises[idx];
+  if (ex.failed) {
+    // Undo fail
+    ex.failed = false;
+    ex.checked = false;
+  } else {
+    // Mark failed — still counts as attempted
+    ex.failed = true;
+    ex.checked = true;
+  }
+  saveCurrentLog(log);
+  renderLog();
 }
 
 function updateLogBodyWeight(val) {
@@ -2714,7 +2785,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.3
+      FitBy50 v1.4
     </div>
   `;
 }
