@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0D0D0F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>FitBy50</title>
 <style>
 :root {
@@ -496,6 +500,120 @@ input[type="number"] { width: 90px; text-align: center; }
 .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
 .empty-state-text { font-size: 15px; }
 
+/* Streak strip (inside week tracker) */
+.streak-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--bg3);
+  font-size: 12px; color: var(--text2); font-weight: 600;
+}
+.streak-strip .streak-main { color: var(--text); font-weight: 700; }
+.streak-shield { font-size: 11px; color: var(--text3); }
+
+/* Countdown subtitle */
+.countdown-sub {
+  font-size: 12px; color: var(--text3); font-weight: 600; margin-top: 2px;
+}
+.countdown-sub b { color: var(--core); font-weight: 800; }
+
+/* Planned-next banner */
+.planned-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: rgba(127,119,221,0.12); border: 1px solid rgba(127,119,221,0.35);
+  border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 12px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+.planned-banner .planned-clear {
+  background: none; color: var(--text3); font-size: 16px; padding: 0 4px;
+}
+
+/* Readiness check-in */
+.readiness-card {
+  background: var(--bg2); border-radius: var(--radius);
+  padding: 12px 16px; margin-bottom: 12px;
+}
+.readiness-title { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; }
+.readiness-btns { display: flex; gap: 8px; }
+.readiness-btn {
+  flex: 1; padding: 10px 4px; border-radius: var(--radius-sm);
+  background: var(--bg3); color: var(--text2);
+  font-size: 13px; font-weight: 600;
+}
+.readiness-btn span { font-size: 18px; display: block; margin-bottom: 2px; }
+
+/* Scaled badge */
+.scaled-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(91,184,154,0.15); color: var(--recovery);
+  font-size: 12px; font-weight: 700; padding: 6px 10px;
+  border-radius: var(--radius-sm); margin-bottom: 12px;
+}
+
+/* Deload badge */
+.deload-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(91,184,154,0.15); color: var(--recovery);
+  font-size: 11px; font-weight: 700; padding: 2px 8px;
+  border-radius: 4px; letter-spacing: 0.5px;
+}
+
+/* Exercise swap button */
+.ex-swap {
+  background: none; color: var(--text3); font-size: 14px;
+  padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+  border: 1px solid var(--bg4); line-height: 1;
+}
+.ex-swap:active { color: var(--text); }
+
+/* Post-workout summary overlay */
+.summary-overlay {
+  position: fixed; inset: 0; z-index: 1500;
+  background: var(--bg); display: none;
+  flex-direction: column; overflow-y: auto;
+  padding: 32px 20px calc(24px + var(--safe-b));
+  -webkit-overflow-scrolling: touch;
+}
+.summary-overlay.active { display: flex; }
+.summary-hero { text-align: center; margin-bottom: 20px; }
+.summary-hero .summary-emoji { font-size: 44px; margin-bottom: 6px; }
+.summary-hero .summary-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+.summary-hero .summary-sub { font-size: 13px; color: var(--text3); margin-top: 4px; font-weight: 600; }
+.summary-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
+}
+.summary-stat {
+  background: var(--bg2); border-radius: var(--radius); padding: 14px;
+  text-align: center;
+}
+.summary-stat .stat-value { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.summary-stat .stat-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text3); text-transform: uppercase; margin-top: 2px; }
+.summary-card {
+  background: var(--bg2); border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  border-left: 4px solid var(--strength);
+}
+.pr-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(233,168,76,0.18); color: var(--core);
+  font-size: 11px; font-weight: 800; padding: 3px 8px;
+  border-radius: 4px; letter-spacing: 0.5px;
+}
+.plan-chips { display: flex; gap: 8px; margin-top: 10px; }
+.plan-chip {
+  flex: 1; padding: 10px 4px; border-radius: var(--radius-sm);
+  background: var(--bg3); color: var(--text2);
+  font-size: 12px; font-weight: 700; text-align: center;
+}
+.plan-chip.selected { background: var(--strength); color: #fff; }
+
+/* Sparkline row */
+.spark-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--bg3);
+}
+.spark-row:last-child { border-bottom: none; }
+.spark-label { font-size: 13px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spark-value { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.spark-delta { font-size: 11px; font-weight: 700; margin-left: 4px; }
+
 /* Confirm dialog */
 .confirm-overlay {
   position: fixed; inset: 0; z-index: 2000;
@@ -523,10 +641,13 @@ input[type="number"] { width: 90px; text-align: center; }
       <div>
         <div class="brand">FitBy50</div>
         <div class="view-title" id="today-greeting">Today's WOD</div>
+        <div class="countdown-sub" id="today-countdown"></div>
       </div>
       <div id="equip-badge" class="equip-badge home">HOME</div>
     </div>
     <div id="week-tracker"></div>
+    <div id="planned-banner"></div>
+    <div id="readiness-card"></div>
     <div class="day-selector" id="day-selector">
       <button class="day-btn active" data-day="weekday">Weekday</button>
       <button class="day-btn" data-day="saturday">Saturday</button>
@@ -588,6 +709,14 @@ input[type="number"] { width: 90px; text-align: center; }
       Settings
     </button>
   </nav>
+</div>
+
+<!-- Post-Workout Summary Overlay -->
+<div class="summary-overlay" id="summary-overlay">
+  <div id="summary-content" style="width:100%;max-width:500px;margin:0 auto;"></div>
+  <div style="width:100%;max-width:500px;margin:16px auto 0;">
+    <button class="btn btn-primary" onclick="closeSummary()">DONE</button>
+  </div>
 </div>
 
 <!-- Timer Overlay -->
@@ -716,7 +845,11 @@ const STORAGE_KEYS = {
   currentLog: 'fb50_current_log',
   shuffleCount: 'fb50_shuffle_count',
   githubToken: 'fb50_github_token',
-  githubSha: 'fb50_github_sha'
+  githubSha: 'fb50_github_sha',
+  strengthCount: 'fb50_strength_count',
+  adjustments: 'fb50_adjustments',
+  plannedNext: 'fb50_planned_next',
+  readiness: 'fb50_readiness'
 };
 
 function getSettings() {
@@ -726,6 +859,7 @@ function getSettings() {
     height: 72,
     equipment: 'home',
     herniaMode: true,
+    birthday: '',
     oneRM: {
       backSquat: 275,
       benchPress: 225,
@@ -810,6 +944,49 @@ function setShuffleCount(n) {
   localStorage.setItem(STORAGE_KEYS.shuffleCount, String(n));
 }
 
+// --- Strength session counter (drives deload cycles) ---
+function getStrengthCount() {
+  return parseInt(localStorage.getItem(STORAGE_KEYS.strengthCount) || '0', 10);
+}
+function setStrengthCount(n) {
+  localStorage.setItem(STORAGE_KEYS.strengthCount, String(Math.max(0, n)));
+}
+// Every 4th full rotation (4 strength sessions each) is a deload block
+function isDeloadCycle() {
+  return Math.floor(getStrengthCount() / 4) % 4 === 3;
+}
+
+// --- Autoregulation adjustments (set by FAILs, cleared by clean sessions) ---
+function getAdjustments() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.adjustments)) || {}; }
+  catch(e) { return {}; }
+}
+function saveAdjustments(a) {
+  localStorage.setItem(STORAGE_KEYS.adjustments, JSON.stringify(a || {}));
+}
+
+// --- Planned next workout (implementation intention) ---
+function getPlannedNext() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.plannedNext)); }
+  catch(e) { return null; }
+}
+function savePlannedNext(p) {
+  if (p) localStorage.setItem(STORAGE_KEYS.plannedNext, JSON.stringify(p));
+  else localStorage.removeItem(STORAGE_KEYS.plannedNext);
+}
+
+// --- Daily readiness check-in ---
+function getReadiness() {
+  try {
+    const r = JSON.parse(localStorage.getItem(STORAGE_KEYS.readiness));
+    if (r && r.date === todayStr()) return r.level;
+  } catch(e) {}
+  return null;
+}
+function setReadiness(level) {
+  localStorage.setItem(STORAGE_KEYS.readiness, JSON.stringify({ date: todayStr(), level: level }));
+}
+
 // ============================================================
 // GITHUB SYNC
 // ============================================================
@@ -844,8 +1021,10 @@ async function syncToGitHub(silent) {
       settings: getSettings(),
       history: getHistory(),
       rotationIndex: getRotationIndex(),
+      strengthCount: getStrengthCount(),
+      adjustments: getAdjustments(),
       lastSync: new Date().toISOString(),
-      version: 1
+      version: 2
     };
 
     const jsonStr = JSON.stringify(syncData, null, 2);
@@ -952,6 +1131,8 @@ async function pullFromGitHub(silent) {
     if (localHistory.length === 0 && syncData.settings) {
       saveSettings(syncData.settings);
       if (syncData.rotationIndex !== undefined) setRotationIndex(syncData.rotationIndex);
+      if (syncData.strengthCount !== undefined) setStrengthCount(syncData.strengthCount);
+      if (syncData.adjustments) saveAdjustments(syncData.adjustments);
     }
 
     if (newCount > 0 && !silent) {
@@ -1037,7 +1218,147 @@ function formatTime(seconds) {
 
 function todayStr() {
   const d = new Date();
+  return localDateStr(d);
+}
+
+function localDateStr(d) {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// Estimated 1RM (Epley). Only meaningful for 1-12 rep sets.
+function epley1RM(weight, reps) {
+  if (!weight || weight <= 0 || !reps || reps <= 0) return 0;
+  if (reps === 1) return weight;
+  if (reps > 12) return 0;
+  return Math.round(weight * (1 + reps / 30));
+}
+
+// Monday (local) of the week containing dateStr, as YYYY-MM-DD
+function mondayOf(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
+  d.setDate(d.getDate() - ((dow + 6) % 7));
+  return localDateStr(d);
+}
+
+// This week's activity stats — shared by week tracker + summary
+function computeWeekStats(history) {
+  const monStr = mondayOf(todayStr());
+  const sun = new Date(monStr + 'T12:00:00');
+  sun.setDate(sun.getDate() + 6);
+  const sunStr = localDateStr(sun);
+  const intenseDayTypes = ['weekday', 'saturday', 'sunday'];
+  let active = 0, intense = 0, z2 = 0;
+  history.forEach(h => {
+    if (h.date >= monStr && h.date <= sunStr) {
+      active++;
+      if (intenseDayTypes.includes(h.dayType)) intense++;
+      if (h.z2Minutes > 0) z2 += h.z2Minutes;
+    }
+  });
+  return { active: active, intense: intense, z2: z2 };
+}
+
+// Weekly-consistency streaks (3+ workouts = a good week) with one
+// "streak shield" per calendar month: a single missed week per month
+// doesn't break the chain. The in-progress week never breaks it.
+function computeStreaks(history) {
+  const weekCounts = {};
+  history.forEach(h => {
+    const wk = mondayOf(h.date);
+    weekCounts[wk] = (weekCounts[wk] || 0) + 1;
+  });
+  const weekKeys = Object.keys(weekCounts).sort();
+  if (weekKeys.length === 0) return { current: 0, best: 0, shieldWeek: null };
+
+  const thisWeek = mondayOf(todayStr());
+  const firstWeek = weekKeys[0];
+
+  // Current streak: walk backwards from this week
+  let current = 0;
+  let shieldWeek = null;
+  const shieldMonths = {};
+  let wk = thisWeek;
+  for (let guard = 0; guard < 520; guard++) {
+    if (wk < firstWeek) break;
+    const cnt = weekCounts[wk] || 0;
+    if (cnt >= 3) {
+      current++;
+    } else if (wk === thisWeek) {
+      // week in progress — neither counts nor breaks
+    } else {
+      const month = wk.slice(0, 7);
+      if (!shieldMonths[month]) {
+        shieldMonths[month] = true;
+        if (!shieldWeek) shieldWeek = wk;
+      } else {
+        break;
+      }
+    }
+    const prev = new Date(wk + 'T12:00:00');
+    prev.setDate(prev.getDate() - 7);
+    wk = localDateStr(prev);
+  }
+
+  // Best streak: forward scan with the same shield rule per run
+  let best = 0, run = 0;
+  let runShields = {};
+  wk = firstWeek;
+  for (let guard = 0; guard < 520; guard++) {
+    if (wk > thisWeek) break;
+    const cnt = weekCounts[wk] || 0;
+    if (cnt >= 3) {
+      run++;
+      if (run > best) best = run;
+    } else if (wk !== thisWeek) {
+      const month = wk.slice(0, 7);
+      if (run > 0 && !runShields[month]) {
+        runShields[month] = true; // shield absorbs the miss
+      } else {
+        run = 0;
+        runShields = {};
+      }
+    }
+    const next = new Date(wk + 'T12:00:00');
+    next.setDate(next.getDate() + 7);
+    wk = localDateStr(next);
+  }
+  if (current > best) best = current;
+
+  // Is the shield still available this month (for the current streak)?
+  const thisMonth = thisWeek.slice(0, 7);
+  const shieldAvailable = !shieldMonths[thisMonth];
+
+  return { current: current, best: best, shieldWeek: shieldWeek, shieldAvailable: shieldAvailable };
+}
+
+// Tiny inline SVG sparkline
+function sparkline(values, color, w, h) {
+  w = w || 110; h = h || 26;
+  if (!values || values.length < 2) return '';
+  const min = Math.min.apply(null, values);
+  const max = Math.max.apply(null, values);
+  const span = (max - min) || 1;
+  const px = (i) => (i / (values.length - 1)) * w;
+  const py = (v) => h - 3 - ((v - min) / span) * (h - 6);
+  const pts = values.map((v, i) => px(i).toFixed(1) + ',' + py(v).toFixed(1)).join(' ');
+  const lastY = py(values[values.length - 1]).toFixed(1);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible;flex-shrink:0;">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    <circle cx="${w}" cy="${lastY}" r="2.5" fill="${color}"/>
+  </svg>`;
+}
+
+// Max estimated 1RM per lift from a history entry
+function entryE1RM(h, liftName) {
+  let best = 0;
+  (h.exercises || []).forEach(e => {
+    if (e.name === liftName && e.isMainLift && e.checked && !e.failed && e.weight > 0 && e.reps > 0) {
+      const est = epley1RM(e.weight, e.reps);
+      if (est > best) best = est;
+    }
+  });
+  return best;
 }
 
 function applyEquipSubs(exerciseName, equipment) {
@@ -1083,6 +1404,26 @@ function generateWod(dayType, dateStr) {
     wod = generateRecovery(wod, settings, rng);
   } else {
     wod = generateSunday(wod, settings, rng);
+  }
+
+  // Readiness scaling: low tank → -10% loads, one fewer conditioning round.
+  // Turns "too tired, skip" into "do the lighter version" — the habit survives.
+  const readiness = getReadiness();
+  wod.readiness = readiness;
+  wod.strengthCount = getStrengthCount();
+  if (readiness === 'low' && dayType !== 'recovery') {
+    wod.scaled = true;
+    wod.sections.forEach(s => {
+      if (s.type === 'strength') {
+        s.weights = s.weights.map(w => ({ pct: w.pct, weight: roundTo5(w.weight * 0.9) }));
+      } else if ((s.type === 'core' || s.type === 'hiit' || s.type === 'glute') && s.rounds > 2) {
+        s.rounds = s.rounds - 1;
+        s.format = s.format.replace(/^\d+ RDS/, s.rounds + ' RDS');
+      } else if (s.type === 'strengthcon' && s.rounds > 2) {
+        s.rounds = s.rounds - 1;
+        s.format = s.rounds + ' RDS or 30 MIN Cap';
+      }
+    });
   }
 
   return wod;
@@ -1199,9 +1540,20 @@ function generateStrength(rotIdx, settings, rng) {
   const format = weightedPick(STRENGTH_FORMATS, rng);
   const rx = LOADING_RX[mainLift];
   const oneRMKey = rx ? rx.oneRMKey : null;
-  const oneRM = oneRMKey ? (settings.oneRM[oneRMKey] || 0) : 0;
+  let oneRM = oneRMKey ? (settings.oneRM[oneRMKey] || 0) : 0;
+
+  // Autoregulation: a failed session pulls the next one down ~7.5%
+  const adjustments = getAdjustments();
+  const adjFactor = (oneRMKey && adjustments[oneRMKey]) ? adjustments[oneRMKey] : 1;
+  if (adjFactor < 1) oneRM = Math.round(oneRM * adjFactor);
+
+  // Deload: every 4th rotation cycle drops intensity ~30% on purpose
+  const deload = isDeloadCycle();
 
   let buildPattern = rx ? rx.buildPattern : [60,65,70,75,80];
+  if (deload) {
+    buildPattern = buildPattern.map(p => Math.max(40, Math.round(p * 0.7)));
+  }
   // Adjust pattern length to match rounds
   if (format.rounds !== buildPattern.length) {
     if (format.rounds < buildPattern.length) {
@@ -1245,7 +1597,9 @@ function generateStrength(rotIdx, settings, rng) {
     oneRM: oneRM,
     accessory: accessory.map(e => ({ name: applyEquipSubs(e, settings.equipment), reps: '10-12' })),
     herniaFlags: herniaFlags,
-    herniaMode: settings.herniaMode
+    herniaMode: settings.herniaMode,
+    deload: deload,
+    autoRegulated: adjFactor < 1
   };
 }
 
@@ -1448,7 +1802,7 @@ function renderToday() {
   // Check for stored wod with same date + dayType + rotation + equipment + shuffle
   const stored = getCurrentWod();
   const sc = getShuffleCount();
-  if (stored && stored.date === dateStr && stored.dayType === currentDayType && stored.equipment === settings.equipment && stored.rotationIndex === getRotationIndex() && (stored.shuffleCount || 0) === sc) {
+  if (stored && stored.date === dateStr && stored.dayType === currentDayType && stored.equipment === settings.equipment && stored.rotationIndex === getRotationIndex() && (stored.shuffleCount || 0) === sc && (stored.readiness || null) === getReadiness() && (stored.strengthCount || 0) === getStrengthCount()) {
     currentWod = stored;
   } else {
     currentWod = generateWod(currentDayType, dateStr);
@@ -1456,9 +1810,74 @@ function renderToday() {
     saveCurrentWod(currentWod);
   }
 
+  renderCountdown();
   renderWeekTracker();
+  renderPlannedBanner();
+  renderReadinessCard();
   renderRotation();
   renderWodContent(currentWod);
+}
+
+// "X days to 50 — Y workouts banked"
+function renderCountdown() {
+  const el = document.getElementById('today-countdown');
+  if (!el) return;
+  const s = getSettings();
+  if (!s.birthday) { el.innerHTML = ''; return; }
+  const b = new Date(s.birthday + 'T12:00:00');
+  if (isNaN(b.getTime())) { el.innerHTML = ''; return; }
+  const fifty = new Date(b);
+  fifty.setFullYear(b.getFullYear() + 50);
+  const now = new Date(todayStr() + 'T12:00:00');
+  const days = Math.round((fifty - now) / 86400000);
+  const total = getHistory().length;
+  if (days > 0) {
+    el.innerHTML = `<b>${days}</b> day${days === 1 ? '' : 's'} to 50 &nbsp;·&nbsp; <b>${total}</b> workout${total === 1 ? '' : 's'} banked`;
+  } else {
+    el.innerHTML = `50 and strong &nbsp;·&nbsp; <b>${total}</b> workout${total === 1 ? '' : 's'} banked`;
+  }
+}
+
+// Planned-next banner (implementation intention made visible)
+function renderPlannedBanner() {
+  const el = document.getElementById('planned-banner');
+  if (!el) return;
+  const p = getPlannedNext();
+  if (!p || !p.date) { el.innerHTML = ''; return; }
+  if (p.date < todayStr()) { savePlannedNext(null); el.innerHTML = ''; return; }
+  const d = new Date(p.date + 'T12:00:00');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const isToday = p.date === todayStr();
+  const dayLabel = isToday ? 'Today' : days[d.getDay()];
+  el.innerHTML = `<div class="planned-banner">
+    <span>📅 Planned: <b>${dayLabel} ${p.time || ''}</b>${p.focus ? ' — ' + p.focus : ''}</span>
+    <button class="planned-clear" onclick="savePlannedNext(null);renderPlannedBanner();" title="Clear plan">✕</button>
+  </div>`;
+}
+
+// Readiness check-in — shown once per day, before the workout
+function renderReadinessCard() {
+  const el = document.getElementById('readiness-card');
+  if (!el) return;
+  const done = getHistory().some(h => h.date === todayStr());
+  if (getReadiness() !== null || done || currentDayType === 'recovery') { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="readiness-card">
+    <div class="readiness-title">How's the tank today?</div>
+    <div class="readiness-btns">
+      <button class="readiness-btn" onclick="selectReadiness('low')"><span>😴</span>Low</button>
+      <button class="readiness-btn" onclick="selectReadiness('ok')"><span>😐</span>OK</button>
+      <button class="readiness-btn" onclick="selectReadiness('high')"><span>🔥</span>Ready</button>
+    </div>
+  </div>`;
+}
+
+function selectReadiness(level) {
+  setReadiness(level);
+  localStorage.removeItem(STORAGE_KEYS.currentWod);
+  localStorage.removeItem(STORAGE_KEYS.currentLog);
+  renderToday();
+  if (level === 'low') showToast('Scaled today down — showing up still counts');
+  else if (level === 'high') showToast('Let\'s go 🔥');
 }
 
 function renderWeekTracker() {
@@ -1479,15 +1898,13 @@ function renderWeekTracker() {
   };
   const intenseDayTypes = ['weekday', 'saturday', 'sunday']; // non-recovery
 
-  let activeCount = 0;
-  let intenseCount = 0;
   let daysHtml = '';
 
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    const dateStr = d.toISOString().slice(0, 10);
-    const isToday = dateStr === today.toISOString().slice(0, 10);
+    const dateStr = localDateStr(d);
+    const isToday = dateStr === todayStr();
 
     const workout = history.find(h => h.date === dateStr);
     let dotStyle = '';
@@ -1499,8 +1916,6 @@ function renderWeekTracker() {
       dotStyle = `background:${color};`;
       dotClass += ' active';
       checkMark = '✓';
-      activeCount++;
-      if (intenseDayTypes.includes(workout.dayType)) intenseCount++;
     }
 
     daysHtml += `<div class="week-day">
@@ -1509,21 +1924,42 @@ function renderWeekTracker() {
     </div>`;
   }
 
-  const activeGoal = activeCount >= 3;
-  const intenseGoal = intenseCount >= 3;
+  const stats = computeWeekStats(history);
+  const activeGoal = stats.active >= 3;
+  const intenseGoal = stats.intense >= 3;
+  const z2Goal = stats.z2 >= 90;
+
+  const streaks = computeStreaks(history);
+  let streakHtml = '';
+  if (history.length > 0) {
+    const shield = streaks.shieldAvailable
+      ? '🛡 shield ready'
+      : '🛡 shield used this month';
+    streakHtml = `<div class="streak-strip">
+      <span class="streak-main">🔥 ${streaks.current}-week streak</span>
+      <span>Best: ${streaks.best}</span>
+      <span>#${history.length} total</span>
+      <span class="streak-shield">${shield}</span>
+    </div>`;
+  }
 
   el.innerHTML = `<div class="week-tracker">
     <div class="week-days">${daysHtml}</div>
     <div class="week-goals">
       <div class="week-goal ${activeGoal ? 'hit' : ''}">
         <div class="week-goal-dot"></div>
-        ${activeCount}/3 Active
+        ${stats.active}/3 Active
       </div>
       <div class="week-goal ${intenseGoal ? 'hit' : ''}">
         <div class="week-goal-dot"></div>
-        ${intenseCount}/3 Intense
+        ${stats.intense}/3 Intense
+      </div>
+      <div class="week-goal ${z2Goal ? 'hit' : ''}">
+        <div class="week-goal-dot"></div>
+        ${stats.z2}/90 Z2 min
       </div>
     </div>
+    ${streakHtml}
   </div>`;
 }
 
@@ -1549,11 +1985,28 @@ function renderWodContent(wod) {
   });
   html += '</div>';
 
+  if (wod.scaled) {
+    html += `<div class="scaled-badge">↓ Scaled for recovery — lighter loads, one fewer round. Showing up is the win.</div>`;
+  }
+
   wod.sections.forEach((section, si) => {
     html += renderSection(section, si);
   });
 
   el.innerHTML = html;
+}
+
+// Shared exercise list with per-exercise swap buttons (autonomy without
+// rerolling the whole WOD)
+function exListHtml(section, si, flagFn) {
+  let h = '<ul class="exercise-list">';
+  section.exercises.forEach((e, ei) => {
+    const swappable = !e.isBarbell;
+    const flag = flagFn ? (flagFn(e) || '') : '';
+    h += `<li>${swappable ? `<button class="ex-swap" onclick="swapExercise(${si},${ei})" title="Swap this exercise">⇄</button>` : ''}${e.name} ${flag}<span class="exercise-rep">${e.reps}</span></li>`;
+  });
+  h += '</ul>';
+  return h;
 }
 
 function renderSection(section, si) {
@@ -1564,17 +2017,19 @@ function renderSection(section, si) {
 
   if (section.type === 'warmup') {
     html += `<div class="card-meta">${section.format}</div>`;
-    html += '<ul class="exercise-list">';
-    section.exercises.forEach(e => {
-      html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
-    });
-    html += '</ul>';
+    html += exListHtml(section, si);
     html += `<div style="margin-top:12px"><button class="btn btn-warmup btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'strength') {
-    html += `<div class="card-title">${section.mainLift}</div>`;
+    html += `<div class="card-title">${section.mainLift} ${section.deload ? '<span class="deload-badge">DELOAD WEEK</span>' : ''}</div>`;
     html += `<div class="card-meta">${section.format} — ${section.reps} reps/round — Build Each Round</div>`;
+    if (section.deload) {
+      html += `<div style="font-size:12px;color:var(--recovery);margin-bottom:8px;">Lighter on purpose — recovery is where the gains land. Back to full load next cycle.</div>`;
+    }
+    if (section.autoRegulated) {
+      html += `<div style="font-size:12px;color:var(--caution);margin-bottom:8px;">Auto-regulated −7.5% after last session's fails. A clean session resets it.</div>`;
+    }
     if (section.oneRM > 0) {
       html += `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">1RM: ${section.oneRM} lb</div>`;
     }
@@ -1593,8 +2048,8 @@ function renderSection(section, si) {
     if (section.accessory.length > 0) {
       html += '<div style="margin-top:10px;font-size:13px;color:var(--text3);font-weight:600;">Accessory (remaining time):</div>';
       html += '<ul class="exercise-list">';
-      section.accessory.forEach(e => {
-        html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
+      section.accessory.forEach((e, ai) => {
+        html += `<li><button class="ex-swap" onclick="swapAccessory(${si},${ai})" title="Swap this exercise">⇄</button>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
       });
       html += '</ul>';
     }
@@ -1604,22 +2059,13 @@ function renderSection(section, si) {
 
   else if (section.type === 'core') {
     html += `<div class="card-meta">${section.format}</div>`;
-    html += '<ul class="exercise-list">';
-    section.exercises.forEach(e => {
-      html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
-    });
-    html += '</ul>';
+    html += exListHtml(section, si);
     html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'metcon') {
     html += `<div class="card-meta">${section.format}</div>`;
-    html += '<ul class="exercise-list">';
-    section.exercises.forEach(e => {
-      const flagged = section.herniaMode && section.herniaExercises.includes(e.name);
-      html += `<li>${e.name} ${flagged ? '<span class="caution-badge">Scale</span>' : ''}<span class="exercise-rep">${e.reps}</span></li>`;
-    });
-    html += '</ul>';
+    html += exListHtml(section, si, (e) => (section.herniaMode && section.herniaExercises.includes(e.name)) ? '<span class="caution-badge">Scale</span>' : '');
     const tc = section.timerConfig;
     if (tc.mode === 'amrap') {
       html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('amrap', ${tc.duration}, 0, 0, 0, ${si})">START TIMER</button></div>`;
@@ -1632,42 +2078,25 @@ function renderSection(section, si) {
 
   else if (section.type === 'strengthcon') {
     html += `<div class="card-meta">${section.format}</div>`;
-    html += '<ul class="exercise-list">';
-    section.exercises.forEach(e => {
-      const flagged = section.herniaMode && isHerniaFlagged(e.name, e.pct || 0, settings);
-      html += `<li>${e.name} ${flagged ? '<span class="caution-badge">CAUTION</span>' : ''}<span class="exercise-rep">${e.reps}</span></li>`;
-    });
-    html += '</ul>';
+    html += exListHtml(section, si, (e) => (section.herniaMode && isHerniaFlagged(e.name, e.pct || 0, settings)) ? '<span class="caution-badge">CAUTION</span>' : '');
     html += `<div style="margin-top:12px"><button class="btn btn-strengthcon btn-sm" onclick="openTimerConfig('forTime', ${section.cap}, 0, ${section.rounds}, 0, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'hiit') {
     html += `<div class="card-meta">${section.format}</div>`;
-    html += '<ul class="exercise-list">';
-    section.exercises.forEach(e => {
-      html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
-    });
-    html += '</ul>';
+    html += exListHtml(section, si);
     html += `<div style="margin-top:12px"><button class="btn btn-hiit btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'glute') {
     html += `<div class="card-meta">${section.format}</div>`;
-    html += '<ul class="exercise-list">';
-    section.exercises.forEach(e => {
-      html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
-    });
-    html += '</ul>';
+    html += exListHtml(section, si);
     html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
   else if (section.type === 'recovery-warmup') {
     html += `<div class="card-meta">${section.format}</div>`;
-    html += '<ul class="exercise-list">';
-    section.exercises.forEach(e => {
-      html += `<li>${e.name}<span class="exercise-rep">${e.reps}</span></li>`;
-    });
-    html += '</ul>';
+    html += exListHtml(section, si);
     html += `<div style="margin-top:12px"><button class="btn btn-recovery btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
   }
 
@@ -2333,8 +2762,20 @@ function buildLogFromWod(wod) {
           liftCategory: e.isBarbell ? section.liftCategory : null
         });
       });
+    } else if (section.type === 'recovery-cardio') {
+      // Zone 2 cardio — logged as a single entry, credits weekly Z2 minutes
+      exercises.push({
+        name: section.label,
+        section: 'ZONE 2',
+        prescription: section.format,
+        hasWeight: false, weight: 0,
+        hasReps: false, reps: 0,
+        checked: false, isMainLift: false,
+        isCardio: true,
+        minutes: section.duration || 30
+      });
     } else {
-      section.exercises.forEach(e => {
+      (section.exercises || []).forEach(e => {
         exercises.push({
           name: e.name,
           section: section.label,
@@ -2453,20 +2894,48 @@ function logCurrentWorkout() {
   log.exercises.forEach(e => e.checked = true);
   saveCurrentLog(log);
 
-  // Save to history
+  const entry = persistLogEntry(log);
+
+  // Advance rotation if this was a strength or strengthcon workout
+  const hasStrength = currentWod.sections.some(s => s.type === 'strength' || s.type === 'strengthcon');
+  if (hasStrength) {
+    setRotationIndex(getRotationIndex() + 1);
+    setStrengthCount(getStrengthCount() + 1);
+  }
+
+  // Clear current wod cache so next generation uses new rotation
+  localStorage.removeItem(STORAGE_KEYS.currentWod);
+  localStorage.removeItem(STORAGE_KEYS.currentLog);
+
+  setShuffleCount(0); // reset shuffle on log
+  syncToGitHub(true);
+  switchView('today');
+  showWorkoutSummary(entry);
+}
+
+// Shared: turn the current log into a history entry (tonnage, Z2, fails → adjustments)
+function persistLogEntry(log) {
   const history = getHistory();
-  // Remove existing entry for same date+type if any
   const existIdx = history.findIndex(h => h.date === log.date && h.dayType === log.dayType);
   if (existIdx >= 0) history.splice(existIdx, 1);
 
-  history.unshift({
+  // Zone 2 minutes from checked cardio entries
+  let z2Minutes = 0;
+  log.exercises.forEach(e => {
+    if (e.isCardio && e.checked && e.minutes > 0) z2Minutes += e.minutes;
+  });
+
+  const entry = {
     date: log.date,
     dayType: log.dayType,
     rotationIndex: log.rotationIndex,
     exercises: log.exercises,
     bodyWeight: log.logBodyWeight || 0,
+    z2Minutes: z2Minutes,
     completedAt: new Date().toISOString()
-  });
+  };
+  history.unshift(entry);
+  saveHistory(history);
 
   // Update body weight in settings if logged
   if (log.logBodyWeight && log.logBodyWeight > 0) {
@@ -2475,21 +2944,40 @@ function logCurrentWorkout() {
     saveSettings(s);
   }
 
-  saveHistory(history);
+  // Autoregulation: fails pull the next session down; clean sessions reset
+  updateAdjustmentsFromLog(log);
 
-  // Advance rotation if this was a strength or strengthcon workout
-  const hasStrength = currentWod.sections.some(s => s.type === 'strength' || s.type === 'strengthcon');
-  if (hasStrength) {
-    setRotationIndex(getRotationIndex() + 1);
-  }
+  // A logged workout satisfies (and clears) the plan
+  const p = getPlannedNext();
+  if (p && p.date && p.date <= log.date) savePlannedNext(null);
 
-  // Clear current wod cache so next generation uses new rotation
-  localStorage.removeItem(STORAGE_KEYS.currentWod);
-  localStorage.removeItem(STORAGE_KEYS.currentLog);
+  return entry;
+}
 
-  showToast('Workout logged! Rotation advanced.');
-  setShuffleCount(0); // reset shuffle on log
-  switchView('today');
+function updateAdjustmentsFromLog(log) {
+  const adj = getAdjustments();
+  let changed = false;
+  const byKey = {};
+  log.exercises.forEach(e => {
+    if (e.isMainLift && e.round) {
+      const rx = LOADING_RX[e.name];
+      const key = rx ? rx.oneRMKey : null;
+      if (!key) return;
+      if (!byKey[key]) byKey[key] = { failed: 0, attempted: 0 };
+      if (e.checked) byKey[key].attempted++;
+      if (e.failed) byKey[key].failed++;
+    }
+  });
+  Object.keys(byKey).forEach(key => {
+    if (byKey[key].failed > 0) {
+      adj[key] = 0.925;
+      changed = true;
+    } else if (byKey[key].attempted > 0 && adj[key]) {
+      delete adj[key];
+      changed = true;
+    }
+  });
+  if (changed) saveAdjustments(adj);
 }
 
 function skipWorkout() {
@@ -2500,31 +2988,92 @@ function skipWorkout() {
   showToast('Shuffled — new workout generated');
 }
 
+// ============================================================
+// PER-EXERCISE SWAP
+// ============================================================
+
+function swapPoolFor(sectionType) {
+  const settings = getSettings();
+  const eq = settings.equipment;
+  if (sectionType === 'warmup') return WARMUP_DYNAMIC.slice();
+  if (sectionType === 'recovery-warmup') return RECOVERY_MOBILITY.slice();
+  if (sectionType === 'core') return filterForEquipment(EXERCISES.core, eq);
+  if (sectionType === 'glute') return filterForEquipment(EXERCISES.glute, eq);
+  // metcon / hiit / strengthcon: the whole movement library, equipment-filtered
+  const pool = [].concat(
+    EXERCISES.push, EXERCISES.pull, EXERCISES.squat,
+    EXERCISES.hinge, EXERCISES.core, EXERCISES.metcon_combo, EXERCISES.conditioning
+  );
+  return filterForEquipment([...new Set(pool)], eq);
+}
+
+function swapExercise(si, ei) {
+  if (!currentWod || !currentWod.sections[si] || !currentWod.sections[si].exercises) return;
+  const section = currentWod.sections[si];
+  const ex = section.exercises[ei];
+  if (!ex || ex.isBarbell) return;
+
+  const settings = getSettings();
+  const inUse = section.exercises.map(e => e.name);
+  const candidates = swapPoolFor(section.type)
+    .map(n => applyEquipSubs(n, settings.equipment))
+    .filter(n => !inUse.includes(n))
+    .filter(n => !(settings.herniaMode && isHerniaFlagged(n, 100, settings)));
+  if (candidates.length === 0) { showToast('No substitute available'); return; }
+
+  const oldName = ex.name;
+  ex.name = candidates[Math.floor(Math.random() * candidates.length)];
+  saveCurrentWod(currentWod);
+
+  // Keep an in-progress log in sync
+  const log = getCurrentLog();
+  if (log && log.date === currentWod.date && log.dayType === currentWod.dayType) {
+    const entry = log.exercises.find(e => e.name === oldName && e.section === section.label && !e.checked);
+    if (entry) { entry.name = ex.name; saveCurrentLog(log); }
+  }
+
+  renderWodContent(currentWod);
+  showToast(`${oldName} → ${ex.name}`);
+}
+
+function swapAccessory(si, ai) {
+  if (!currentWod || !currentWod.sections[si] || !currentWod.sections[si].accessory) return;
+  const section = currentWod.sections[si];
+  const acc = section.accessory[ai];
+  if (!acc) return;
+
+  const settings = getSettings();
+  const liftCat = section.liftCategory;
+  const pool = liftCat === 'squat' ? EXERCISES.squat :
+               liftCat === 'bench' ? EXERCISES.push :
+               liftCat === 'deadlift' ? EXERCISES.hinge :
+               EXERCISES.push;
+  const inUse = section.accessory.map(e => e.name);
+  const candidates = filterForEquipment(pool, settings.equipment)
+    .map(n => applyEquipSubs(n, settings.equipment))
+    .filter(n => !inUse.includes(n))
+    .filter(n => !(settings.herniaMode && isHerniaFlagged(n, 100, settings)));
+  if (candidates.length === 0) { showToast('No substitute available'); return; }
+
+  const oldName = acc.name;
+  acc.name = candidates[Math.floor(Math.random() * candidates.length)];
+  saveCurrentWod(currentWod);
+
+  const log = getCurrentLog();
+  if (log && log.date === currentWod.date && log.dayType === currentWod.dayType) {
+    const entry = log.exercises.find(e => e.name === oldName && e.section === 'STRENGTH' && !e.isMainLift && !e.checked);
+    if (entry) { entry.name = acc.name; saveCurrentLog(log); }
+  }
+
+  renderWodContent(currentWod);
+  showToast(`${oldName} → ${acc.name}`);
+}
+
 function saveLog() {
   const log = getCurrentLog();
   if (!log) return;
 
-  const history = getHistory();
-  const existIdx = history.findIndex(h => h.date === log.date && h.dayType === log.dayType);
-  if (existIdx >= 0) history.splice(existIdx, 1);
-
-  history.unshift({
-    date: log.date,
-    dayType: log.dayType,
-    rotationIndex: log.rotationIndex,
-    exercises: log.exercises,
-    bodyWeight: log.logBodyWeight || 0,
-    completedAt: new Date().toISOString()
-  });
-
-  // Update body weight in settings if logged
-  if (log.logBodyWeight && log.logBodyWeight > 0) {
-    const s = getSettings();
-    s.bodyWeight = log.logBodyWeight;
-    saveSettings(s);
-  }
-
-  saveHistory(history);
+  const entry = persistLogEntry(log);
 
   // Check if enough main lifts were done to advance rotation
   const mainLifts = log.exercises.filter(e => e.isMainLift && e.checked);
@@ -2532,14 +3081,140 @@ function saveLog() {
     const hasStrength = currentWod && currentWod.sections.some(s => s.type === 'strength' || s.type === 'strengthcon');
     if (hasStrength) {
       setRotationIndex(getRotationIndex() + 1);
+      setStrengthCount(getStrengthCount() + 1);
       localStorage.removeItem(STORAGE_KEYS.currentWod);
     }
   }
 
-  showToast('Log saved!');
-
   // Auto-sync to GitHub if token configured
   syncToGitHub(true);
+
+  showWorkoutSummary(entry);
+}
+
+// ============================================================
+// POST-WORKOUT SUMMARY — the moment that builds the habit
+// ============================================================
+
+function showWorkoutSummary(entry) {
+  const history = getHistory();
+  const settings = getSettings();
+  const el = document.getElementById('summary-content');
+
+  const checked = entry.exercises.filter(e => e.checked);
+  const totalSets = entry.exercises.length;
+  let tonnage = 0;
+  checked.forEach(e => {
+    if (e.weight > 0 && e.reps > 0) tonnage += e.weight * e.reps;
+  });
+
+  const streaks = computeStreaks(history);
+  const stats = computeWeekStats(history);
+
+  const emojiMap = { weekday: '💪', saturday: '🏋️', sunday: '⚡', recovery: '🧘' };
+  const dayLabels = { weekday: 'Weekday', saturday: 'Saturday', sunday: 'Sunday', recovery: 'Recovery' };
+
+  let html = `<div class="summary-hero">
+    <div class="summary-emoji">${emojiMap[entry.dayType] || '💪'}</div>
+    <div class="summary-title">${entry.dayType === 'recovery' ? 'Recovery Banked' : 'Workout Logged'}</div>
+    <div class="summary-sub">${formatHistoryDate(entry.date)} — ${dayLabels[entry.dayType] || ''} · Workout #${history.length}</div>
+  </div>`;
+
+  html += `<div class="summary-stats">
+    <div class="summary-stat"><div class="stat-value">${tonnage > 0 ? tonnage.toLocaleString() : '—'}</div><div class="stat-label">Tonnage (lb)</div></div>
+    <div class="summary-stat"><div class="stat-value">${checked.length}/${totalSets}</div><div class="stat-label">Sets Done</div></div>
+    <div class="summary-stat"><div class="stat-value">🔥 ${streaks.current}</div><div class="stat-label">Week Streak</div></div>
+    <div class="summary-stat"><div class="stat-value">${entry.dayType === 'recovery' && entry.z2Minutes > 0 ? entry.z2Minutes + '′' : history.length}</div><div class="stat-label">${entry.dayType === 'recovery' && entry.z2Minutes > 0 ? 'Zone 2 Min' : 'Total Workouts'}</div></div>
+  </div>`;
+
+  // Main-lift performance: e1RM, PR detection, 1RM update prompt
+  const liftNames = [...new Set(entry.exercises.filter(e => e.isMainLift && e.round).map(e => e.name))];
+  liftNames.forEach(lift => {
+    const todayE1 = entryE1RM(entry, lift);
+    if (todayE1 <= 0) return;
+
+    // Best prior e1RM (excluding today's entry)
+    let priorBest = 0;
+    history.forEach(h => {
+      if (h.date === entry.date && h.dayType === entry.dayType) return;
+      const est = entryE1RM(h, lift);
+      if (est > priorBest) priorBest = est;
+    });
+
+    const rx = LOADING_RX[lift];
+    const key = rx ? rx.oneRMKey : null;
+    const stored = key ? (settings.oneRM[key] || 0) : 0;
+    const isPR = priorBest > 0 && todayE1 > priorBest;
+    const firstBench = priorBest === 0;
+
+    html += `<div class="summary-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-weight:700;font-size:15px;">${lift}</div>
+        ${isPR ? '<span class="pr-badge">★ NEW e1RM PR</span>' : ''}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);padding:4px 0;">
+        <span>Today's est. 1RM</span><span style="font-weight:800;color:var(--text);font-size:15px;">${todayE1} lb</span>
+      </div>
+      ${priorBest > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);padding:4px 0;"><span>Previous best</span><span style="font-weight:600;">${priorBest} lb ${isPR ? `<span style="color:var(--success);">+${todayE1 - priorBest}</span>` : ''}</span></div>` : ''}
+      ${firstBench ? `<div style="font-size:12px;color:var(--text3);padding:4px 0;">First tracked session — this is your benchmark.</div>` : ''}
+      ${key && stored > 0 && todayE1 > stored ? `<button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" id="update-1rm-${key}" onclick="applyOneRMUpdate('${key}', ${todayE1}, '${lift.replace(/'/g, "\\'")}')">UPDATE 1RM: ${stored} → ${todayE1} LB</button>` : ''}
+    </div>`;
+  });
+
+  // Week goals
+  html += `<div class="summary-card" style="border-left-color:var(--core);">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">This Week</div>
+    <div class="week-goals" style="margin-top:0;">
+      <div class="week-goal ${stats.active >= 3 ? 'hit' : ''}"><div class="week-goal-dot"></div>${stats.active}/3 Active</div>
+      <div class="week-goal ${stats.intense >= 3 ? 'hit' : ''}"><div class="week-goal-dot"></div>${stats.intense}/3 Intense</div>
+      <div class="week-goal ${stats.z2 >= 90 ? 'hit' : ''}"><div class="week-goal-dot"></div>${stats.z2}/90 Z2</div>
+    </div>
+    ${stats.active === 2 ? '<div style="font-size:12px;color:var(--text2);margin-top:8px;">One more and the week is yours.</div>' : ''}
+    ${stats.active >= 3 && stats.intense >= 3 ? '<div style="font-size:12px;color:var(--success);margin-top:8px;">Week goals hit. This is just what you do now.</div>' : ''}
+  </div>`;
+
+  // Implementation intention: lock in the next session while motivation is high
+  const nextLiftCat = LIFT_ROTATION[getRotationIndex()];
+  const nextFocus = nextLiftCat.charAt(0).toUpperCase() + nextLiftCat.slice(1) + ' day';
+  html += `<div class="summary-card" style="border-left-color:var(--strengthcon);">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Next Up: ${nextFocus}</div>
+    <div style="font-size:13px;color:var(--text2);">When's the next one? Deciding now doubles the odds you show up.</div>
+    <div class="plan-chips" id="plan-chips">
+      <button class="plan-chip" onclick="planNext(1, 'AM', '${nextFocus}', this)">Tomorrow AM</button>
+      <button class="plan-chip" onclick="planNext(1, 'PM', '${nextFocus}', this)">Tomorrow PM</button>
+      <button class="plan-chip" onclick="planNext(2, '', '${nextFocus}', this)">In 2 Days</button>
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
+  document.getElementById('summary-overlay').classList.add('active');
+  document.getElementById('summary-overlay').scrollTop = 0;
+}
+
+function planNext(daysAhead, time, focus, btn) {
+  const d = new Date(todayStr() + 'T12:00:00');
+  d.setDate(d.getDate() + daysAhead);
+  savePlannedNext({ date: localDateStr(d), time: time, focus: focus });
+  document.querySelectorAll('#plan-chips .plan-chip').forEach(b => b.classList.remove('selected'));
+  if (btn) btn.classList.add('selected');
+  showToast('Locked in 📅');
+}
+
+function applyOneRMUpdate(key, newVal, liftName) {
+  const s = getSettings();
+  s.oneRM[key] = newVal;
+  saveSettings(s);
+  localStorage.removeItem(STORAGE_KEYS.currentWod);
+  localStorage.removeItem(STORAGE_KEYS.currentLog);
+  const btn = document.getElementById('update-1rm-' + key);
+  if (btn) { btn.textContent = '✓ 1RM UPDATED — ' + newVal + ' LB'; btn.disabled = true; btn.style.opacity = '0.6'; }
+  showToast(liftName + ' 1RM → ' + newVal + ' lb');
+  syncToGitHub(true);
+}
+
+function closeSummary() {
+  document.getElementById('summary-overlay').classList.remove('active');
+  switchView('today');
 }
 
 // ============================================================
@@ -2559,25 +3234,40 @@ function renderHistory() {
   let html = '<div class="card" style="border-left-color:var(--strength);">';
   html += '<div class="card-label label-strength">LIFT PROGRESSION</div>';
 
-  const liftNames = ['BB Back Squat', 'BB Bench Press', 'BB Deadlift', 'BB Push Press'];
+  // Every main lift that appears in history (variants included), else the big four
+  const liftSet = new Set();
+  history.forEach(h => (h.exercises || []).forEach(e => {
+    if (e.isMainLift && e.round && e.checked && e.weight > 0) liftSet.add(e.name);
+  }));
+  const liftNames = liftSet.size > 0
+    ? Array.from(liftSet).sort()
+    : ['BB Back Squat', 'BB Bench Press', 'BB Deadlift', 'BB Push Press'];
+  let anyLift = false;
   liftNames.forEach(lift => {
-    const entries = [];
-    history.forEach(h => {
-      h.exercises.forEach(e => {
-        if (e.name === lift && e.isMainLift && e.checked && e.weight > 0) {
-          // Find max weight used for that date
-          if (!entries.find(en => en.date === h.date)) {
-            const maxW = Math.max(...h.exercises.filter(ex => ex.name === lift && ex.checked && ex.weight > 0).map(ex => ex.weight));
-            entries.push({ date: h.date, weight: maxW });
-          }
-        }
-      });
+    // e1RM trend per session (oldest → newest)
+    const series = [];
+    history.slice().reverse().forEach(h => {
+      const est = entryE1RM(h, lift);
+      if (est > 0) series.push(est);
     });
-    if (entries.length > 0) {
-      const recent = entries.slice(0, 5).reverse();
-      html += `<div style="margin-top:8px;"><span style="font-size:14px;font-weight:600;">${lift}:</span> <span style="font-size:13px;color:var(--text2);">${recent.map(e => e.weight + 'lb').join(' → ')}</span></div>`;
+    if (series.length > 0) {
+      anyLift = true;
+      const recent = series.slice(-8);
+      const last = recent[recent.length - 1];
+      const delta = recent.length > 1 ? last - recent[0] : 0;
+      const deltaHtml = (recent.length > 1 && delta !== 0)
+        ? `<span class="spark-delta" style="color:${delta > 0 ? 'var(--success)' : 'var(--text3)'};">${delta > 0 ? '+' : ''}${delta}</span>`
+        : '';
+      html += `<div class="spark-row">
+        <span class="spark-label">${lift}</span>
+        ${sparkline(recent, 'var(--strength)')}
+        <span class="spark-value">e1RM ${last}${deltaHtml}</span>
+      </div>`;
     }
   });
+  if (!anyLift) {
+    html += '<div style="font-size:13px;color:var(--text3);padding:8px 0;">Log main-lift weights and reps to see your estimated-1RM trend here.</div>';
+  }
 
   html += '<div style="margin-top:12px;">';
   html += '<div class="rotation-indicator">';
@@ -2590,30 +3280,26 @@ function renderHistory() {
   html += `<span class="rotation-label">Current: ${labels[ridx]}</span>`;
   html += '</div></div></div>';
 
-  // BMI Trend
+  // Body weight trend (no BMI — it punishes muscle on a lifter; the trend
+  // line plus lift performance tells the real story)
   const settings = getSettings();
   const weightEntries = history.filter(h => h.bodyWeight > 0).slice(0, 10);
-  if (weightEntries.length > 0 || settings.height > 0) {
-    const currentBmi = (settings.bodyWeight / (settings.height * settings.height)) * 703;
+  if (weightEntries.length > 0 || settings.bodyWeight > 0) {
     html += '<div class="card" style="border-left-color:var(--recovery);margin-top:12px;">';
-    html += '<div class="card-label label-recovery">BODY METRICS</div>';
-    html += `<div style="display:flex;justify-content:space-between;padding:8px 0;">
-      <span style="color:var(--text2);">Current Weight</span>
-      <span style="font-weight:700;">${settings.bodyWeight} lb</span>
-    </div>`;
-    html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bg3);">
-      <span style="color:var(--text2);">BMI</span>
-      <span style="font-weight:700;">${currentBmi.toFixed(1)}</span>
-    </div>`;
-    if (weightEntries.length > 1) {
-      const oldest = weightEntries[weightEntries.length - 1].bodyWeight;
-      const newest = weightEntries[0].bodyWeight;
-      const diff = newest - oldest;
+    html += '<div class="card-label label-recovery">BODY WEIGHT</div>';
+    const series = weightEntries.slice().reverse().map(h => h.bodyWeight);
+    if (series.length > 1) {
+      const diff = Math.round((series[series.length - 1] - series[0]) * 10) / 10;
       const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
-      const color = diff > 0 ? 'var(--danger)' : diff < 0 ? 'var(--success)' : 'var(--text3)';
-      html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bg3);">
-        <span style="color:var(--text2);">Weight Trend (${weightEntries.length} logs)</span>
-        <span style="font-weight:700;color:${color};">${arrow} ${Math.abs(diff)} lb</span>
+      html += `<div class="spark-row">
+        <span class="spark-label">${settings.bodyWeight} lb</span>
+        ${sparkline(series, 'var(--recovery)')}
+        <span class="spark-value" style="color:var(--text2);">${arrow} ${Math.abs(diff)} lb / ${series.length} logs</span>
+      </div>`;
+    } else {
+      html += `<div style="display:flex;justify-content:space-between;padding:8px 0;">
+        <span style="color:var(--text2);">Current Weight</span>
+        <span style="font-weight:700;">${settings.bodyWeight} lb</span>
       </div>`;
     }
     html += '</div>';
@@ -2632,7 +3318,7 @@ function renderHistory() {
       const dow = d.getDay();
       const mon = new Date(d);
       mon.setDate(d.getDate() - ((dow + 6) % 7));
-      const weekKey = mon.toISOString().slice(0, 10);
+      const weekKey = localDateStr(mon);
       if (!weeks[weekKey]) weeks[weekKey] = { workouts: 0, tonnage: 0, sets: 0 };
       weeks[weekKey].workouts++;
       h.exercises.filter(e => e.checked).forEach(e => {
@@ -2645,6 +3331,10 @@ function renderHistory() {
 
     html += '<div class="card" style="border-left-color:var(--core);margin-top:12px;">';
     html += '<div class="card-label label-core">WEEKLY VOLUME</div>';
+    const tonnageSeries = Object.keys(weeks).sort().map(k => weeks[k].tonnage);
+    if (tonnageSeries.length > 1 && tonnageSeries.some(t => t > 0)) {
+      html += `<div style="padding:4px 0 8px;">${sparkline(tonnageSeries, 'var(--core)', 260, 32)}</div>`;
+    }
     Object.keys(weeks).sort().reverse().forEach(weekKey => {
       const w = weeks[weekKey];
       const weekDate = new Date(weekKey + 'T12:00:00');
@@ -2663,47 +3353,26 @@ function renderHistory() {
     html += '</div>';
   }
 
-  // Streak Counter
+  // Streak Counter (with monthly shield)
   if (history.length > 0) {
-    // Count consecutive weeks with 3+ workouts
-    let streakWeeks = 0;
-    const now = new Date();
-    let checkDate = new Date(now);
-
-    // Start from current week
-    while (true) {
-      const dow = checkDate.getDay();
-      const monday = new Date(checkDate);
-      monday.setDate(checkDate.getDate() - ((dow + 6) % 7));
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-
-      const monStr = monday.toISOString().slice(0, 10);
-      const sunStr = sunday.toISOString().slice(0, 10);
-
-      const weekWorkouts = history.filter(h => h.date >= monStr && h.date <= sunStr).length;
-
-      if (weekWorkouts >= 3) {
-        streakWeeks++;
-        checkDate.setDate(checkDate.getDate() - 7);
-      } else if (checkDate.toISOString().slice(0, 10) === monday.toISOString().slice(0, 10) && now.getDay() < 5) {
-        // Current week not over yet — don't break streak, just skip
-        checkDate.setDate(checkDate.getDate() - 7);
-      } else {
-        break;
-      }
-      if (streakWeeks > 52) break; // Safety
-    }
-
+    const streaks = computeStreaks(history);
     html += '<div class="card" style="border-left-color:var(--strength);margin-top:12px;">';
     html += '<div class="card-label label-strength">CONSISTENCY</div>';
     html += `<div style="display:flex;justify-content:space-between;padding:8px 0;">
       <span style="color:var(--text2);">Week Streak (3+ workouts)</span>
-      <span style="font-weight:700;font-size:18px;">${streakWeeks} ${streakWeeks === 1 ? 'week' : 'weeks'}</span>
+      <span style="font-weight:700;font-size:18px;">🔥 ${streaks.current} ${streaks.current === 1 ? 'week' : 'weeks'}</span>
+    </div>`;
+    html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bg3);">
+      <span style="color:var(--text2);">Best Streak</span>
+      <span style="font-weight:700;">${streaks.best} ${streaks.best === 1 ? 'week' : 'weeks'}</span>
     </div>`;
     html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bg3);">
       <span style="color:var(--text2);">Total Workouts</span>
       <span style="font-weight:700;">${history.length}</span>
+    </div>`;
+    html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bg3);">
+      <span style="color:var(--text2);">Streak Shield</span>
+      <span style="font-weight:600;font-size:13px;color:var(--text3);">${streaks.shieldAvailable ? '🛡 Ready — one missed week/month forgiven' : '🛡 Used this month'}</span>
     </div>`;
     html += '</div>';
   }
@@ -2807,6 +3476,13 @@ function renderSettings() {
         <input type="number" value="${s.bodyWeight}" onchange="setSetting('bodyWeight', parseInt(this.value))" style="width:80px;">
       </div>
       <div class="setting-row">
+        <div>
+          <div class="setting-label">Birthday</div>
+          <div class="setting-sublabel">Powers the countdown to 50</div>
+        </div>
+        <input type="date" value="${s.birthday || ''}" onchange="setSetting('birthday', this.value)" style="width:150px;">
+      </div>
+      <div class="setting-row">
         <span class="setting-label">Height</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <input type="number" value="${Math.floor(s.height / 12)}" onchange="setHeight(parseInt(this.value), ${s.height % 12})" style="width:55px;" min="4" max="7">
@@ -2876,7 +3552,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.5
+      FitBy50 v1.6
     </div>
   `;
 }
@@ -2966,8 +3642,10 @@ function exportData() {
     settings: getSettings(),
     history: getHistory(),
     rotationIndex: getRotationIndex(),
+    strengthCount: getStrengthCount(),
+    adjustments: getAdjustments(),
     exported: new Date().toISOString(),
-    version: 1
+    version: 2
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -3072,6 +3750,12 @@ async function init() {
     pullFromGitHub(true).then(changed => {
       if (changed) renderToday();
     });
+  }
+
+  // PWA: offline support + installability (relative path survives the
+  // move from GitHub Pages to a custom domain)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 }
 
