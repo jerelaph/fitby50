@@ -526,6 +526,26 @@ input[type="number"] { width: 90px; text-align: center; }
   background: none; color: var(--text3); font-size: 16px; padding: 0 4px;
 }
 
+/* Weigh-in quick card */
+.weighin-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--bg2); border-radius: var(--radius);
+  padding: 10px 16px; margin-bottom: 12px;
+}
+.weighin-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  color: var(--recovery); text-transform: uppercase;
+}
+.weighin-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.weighin-controls { display: flex; align-items: center; gap: 6px; }
+.weighin-controls .wt-input { color: var(--recovery); width: 66px; }
+.weighin-save {
+  background: var(--recovery); color: #fff; font-size: 12px; font-weight: 800;
+  padding: 8px 12px; border-radius: var(--radius-sm); letter-spacing: 0.5px;
+}
+.weighin-done { font-size: 13px; font-weight: 700; color: var(--recovery); }
+.weighin-edit { background: none; color: var(--text3); font-size: 12px; text-decoration: underline; padding: 4px 0; }
+
 /* Readiness check-in */
 .readiness-card {
   background: var(--bg2); border-radius: var(--radius);
@@ -674,6 +694,7 @@ input[type="number"] { width: 90px; text-align: center; }
     </div>
     <div id="week-tracker"></div>
     <div id="planned-banner"></div>
+    <div id="weighin-card"></div>
     <div id="readiness-card"></div>
     <div class="day-selector" id="day-selector">
       <button class="day-btn active" data-day="weekday">Weekday</button>
@@ -876,7 +897,8 @@ const STORAGE_KEYS = {
   strengthCount: 'fb50_strength_count',
   adjustments: 'fb50_adjustments',
   plannedNext: 'fb50_planned_next',
-  readiness: 'fb50_readiness'
+  readiness: 'fb50_readiness',
+  weighIns: 'fb50_weighins'
 };
 
 function getSettings() {
@@ -1014,6 +1036,29 @@ function setReadiness(level) {
   localStorage.setItem(STORAGE_KEYS.readiness, JSON.stringify({ date: todayStr(), level: level }));
 }
 
+// --- Weigh-ins (standalone, so rest-day weights count too) ---
+function getWeighIns() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.weighIns)) || []; }
+  catch(e) { return []; }
+}
+function saveWeighIns(w) {
+  localStorage.setItem(STORAGE_KEYS.weighIns, JSON.stringify(w || []));
+}
+function addWeighIn(dateStr, weight) {
+  if (!weight || weight <= 0) return;
+  const list = getWeighIns().filter(w => w.date !== dateStr);
+  list.push({ date: dateStr, weight: weight });
+  list.sort((a, b) => a.date.localeCompare(b.date));
+  saveWeighIns(list);
+}
+// Full weight series (weigh-ins + workout-logged weights), ascending by date
+function weightSeries() {
+  const byDate = {};
+  getHistory().forEach(h => { if (h.bodyWeight > 0) byDate[h.date] = h.bodyWeight; });
+  getWeighIns().forEach(w => { byDate[w.date] = w.weight; }); // explicit weigh-ins win
+  return Object.keys(byDate).sort().map(d => ({ date: d, weight: byDate[d] }));
+}
+
 // ============================================================
 // GITHUB SYNC
 // ============================================================
@@ -1050,6 +1095,7 @@ async function syncToGitHub(silent) {
       rotationIndex: getRotationIndex(),
       strengthCount: getStrengthCount(),
       adjustments: getAdjustments(),
+      weighIns: getWeighIns(),
       lastSync: new Date().toISOString(),
       version: 2
     };
@@ -1153,6 +1199,14 @@ async function pullFromGitHub(silent) {
 
     const sortedHistory = Array.from(merged.values()).sort((a, b) => b.date.localeCompare(a.date));
     saveHistory(sortedHistory);
+
+    // Merge weigh-ins by date (local wins on conflict)
+    if (Array.isArray(syncData.weighIns) && syncData.weighIns.length > 0) {
+      const wMap = {};
+      syncData.weighIns.forEach(w => { if (w && w.date && w.weight > 0) wMap[w.date] = w.weight; });
+      getWeighIns().forEach(w => { wMap[w.date] = w.weight; });
+      saveWeighIns(Object.keys(wMap).sort().map(d => ({ date: d, weight: wMap[d] })));
+    }
 
     // Pull settings + rotation if this device has no history (fresh install)
     if (localHistory.length === 0 && syncData.settings) {
@@ -1841,6 +1895,7 @@ function renderToday() {
   renderCountdown();
   renderWeekTracker();
   renderPlannedBanner();
+  renderWeighInCard();
   renderReadinessCard();
   renderRotation();
   renderWodContent(currentWod);
@@ -1881,6 +1936,66 @@ function renderPlannedBanner() {
     <span>📅 Planned: <b>${dayLabel} ${p.time || ''}</b>${p.focus ? ' — ' + p.focus : ''}</span>
     <button class="planned-clear" onclick="savePlannedNext(null);renderPlannedBanner();" title="Clear plan">✕</button>
   </div>`;
+}
+
+// Quick weigh-in on the landing page — works on rest days too
+let weighInEditing = false;
+
+function renderWeighInCard() {
+  const el = document.getElementById('weighin-card');
+  if (!el) return;
+  const today = todayStr();
+  const todays = getWeighIns().find(w => w.date === today);
+
+  if (todays && !weighInEditing) {
+    el.innerHTML = `<div class="weighin-row">
+      <div>
+        <div class="weighin-label">⚖ Weigh-in</div>
+        <div class="weighin-sub">Logged today</div>
+      </div>
+      <div class="weighin-controls">
+        <span class="weighin-done">✓ ${todays.weight} lb</span>
+        <button class="weighin-edit" onclick="weighInEditing=true;renderWeighInCard();">edit</button>
+      </div>
+    </div>`;
+    return;
+  }
+
+  const last = getSettings().bodyWeight || '';
+  el.innerHTML = `<div class="weighin-row">
+    <div>
+      <div class="weighin-label">⚖ Weigh-in</div>
+      <div class="weighin-sub">Optional — counts on rest days too</div>
+    </div>
+    <div class="weighin-controls">
+      <input type="number" inputmode="decimal" step="0.1" min="0" class="wt-input" id="weighin-input" value="${todays ? todays.weight : last}" placeholder="lb">
+      <button class="weighin-save" onclick="saveWeighInFromHome()">LOG</button>
+    </div>
+  </div>`;
+}
+
+function saveWeighInFromHome() {
+  const input = document.getElementById('weighin-input');
+  const w = Math.round(parseFloat(input.value) * 10) / 10;
+  if (!w || w <= 0) { showToast('Enter a weight first'); return; }
+
+  addWeighIn(todayStr(), w);
+
+  const s = getSettings();
+  s.bodyWeight = w;
+  saveSettings(s);
+
+  // Keep an in-progress log's weigh-in field in step
+  const log = getCurrentLog();
+  if (log && log.date === todayStr()) {
+    log.logBodyWeight = w;
+    saveCurrentLog(log);
+  }
+
+  weighInEditing = false;
+  renderWeighInCard();
+  showToast(`Weigh-in logged: ${w} lb`);
+  syncToGitHub(true);
 }
 
 // Readiness check-in — shown once per day, before the workout
@@ -2995,6 +3110,7 @@ function persistLogEntry(log) {
     const s = getSettings();
     s.bodyWeight = log.logBodyWeight;
     saveSettings(s);
+    addWeighIn(log.date, log.logBodyWeight);
   }
 
   // Autoregulation: fails pull the next session down; clean sessions reset
@@ -3450,11 +3566,12 @@ function renderHistory() {
   // Body weight trend (no BMI — it punishes muscle on a lifter; the trend
   // line plus lift performance tells the real story)
   const settings = getSettings();
-  const weightEntries = history.filter(h => h.bodyWeight > 0).slice(0, 10);
+  const allWeights = weightSeries();
+  const weightEntries = allWeights.slice(-14);
   if (weightEntries.length > 0 || settings.bodyWeight > 0) {
     html += '<div class="card" style="border-left-color:var(--recovery);margin-top:12px;">';
     html += '<div class="card-label label-recovery">BODY WEIGHT</div>';
-    const series = weightEntries.slice().reverse().map(h => h.bodyWeight);
+    const series = weightEntries.map(w => w.weight);
     if (series.length > 1) {
       const diff = Math.round((series[series.length - 1] - series[0]) * 10) / 10;
       const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
@@ -3719,7 +3836,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.6.2
+      FitBy50 v1.6.3
     </div>
   `;
 }
@@ -3811,6 +3928,7 @@ function exportData() {
     rotationIndex: getRotationIndex(),
     strengthCount: getStrengthCount(),
     adjustments: getAdjustments(),
+    weighIns: getWeighIns(),
     exported: new Date().toISOString(),
     version: 2
   };
