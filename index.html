@@ -556,6 +556,33 @@ input[type="number"] { width: 90px; text-align: center; }
   border-radius: 4px; letter-spacing: 0.5px;
 }
 
+/* Inline weight editing */
+.wt-edit {
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.wt-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--bg3); color: var(--text);
+  font-size: 16px; font-weight: 700; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.wt-btn:active { background: var(--bg4); }
+.wt-input {
+  width: 62px; text-align: center; padding: 6px 4px;
+  font-size: 15px; font-weight: 700; color: var(--strength);
+}
+.wt-input.wt-edited { border-color: var(--core); color: var(--core); }
+.wt-reset {
+  background: none; color: var(--text3); font-size: 12px;
+  font-weight: 600; padding: 4px 0; text-decoration: underline;
+}
+.station-wt {
+  display: flex; align-items: center; gap: 6px; margin: 4px 0 2px 0;
+}
+.station-wt .wt-input { width: 56px; font-size: 13px; padding: 4px; }
+.station-wt .wt-btn { width: 26px; height: 26px; font-size: 14px; }
+.station-wt-label { font-size: 11px; color: var(--text3); font-weight: 600; }
+
 /* Exercise swap button */
 .ex-swap {
   background: none; color: var(--text3); font-size: 14px;
@@ -2003,7 +2030,20 @@ function exListHtml(section, si, flagFn) {
   section.exercises.forEach((e, ei) => {
     const swappable = !e.isBarbell;
     const flag = flagFn ? (flagFn(e) || '') : '';
-    h += `<li>${swappable ? `<button class="ex-swap" onclick="swapExercise(${si},${ei})" title="Swap this exercise">⇄</button>` : ''}${e.name} ${flag}<span class="exercise-rep">${e.reps}</span></li>`;
+    if (e.isBarbell && typeof e.weight === 'number') {
+      // Barbell station: prescribed load is editable in place
+      h += `<li style="flex-wrap:wrap;">${e.name} ${flag}<span class="exercise-rep">${e.reps}</span>
+        <div class="station-wt" style="flex-basis:100%;">
+          <span class="station-wt-label">Load:</span>
+          <button class="wt-btn" onclick="bumpStationWeight(${si},${ei},-5)">−</button>
+          <input type="number" inputmode="numeric" step="5" min="0" class="wt-input ${e.edited ? 'wt-edited' : ''}" value="${e.weight || 0}" onchange="setStationWeightManual(${si},${ei},this.value)">
+          <button class="wt-btn" onclick="bumpStationWeight(${si},${ei},5)">+</button>
+          ${e.edited ? `<button class="wt-reset" onclick="resetStationWeight(${si},${ei})">reset</button>` : ''}
+        </div>
+      </li>`;
+    } else {
+      h += `<li>${swappable ? `<button class="ex-swap" onclick="swapExercise(${si},${ei})" title="Swap this exercise">⇄</button>` : ''}${e.name} ${flag}<span class="exercise-rep">${e.reps}</span></li>`;
+    }
   });
   h += '</ul>';
   return h;
@@ -2038,12 +2078,24 @@ function renderSection(section, si) {
       html += `<div style="margin-bottom:8px;"><span style="font-size:12px;color:var(--caution);">RPE Cap: 7 — Focus on form &amp; midline stability</span></div>`;
     }
 
-    html += '<table class="weight-table"><thead><tr><th>Round</th><th>Weight</th><th>%</th></tr></thead><tbody>';
+    html += '<table class="weight-table"><thead><tr><th>Round</th><th>Weight (lb)</th><th>%</th></tr></thead><tbody>';
     section.weights.forEach((w, i) => {
       const flagged = section.herniaFlags.includes(i);
-      html += `<tr><td>${i+1}</td><td>${w.weight > 0 ? w.weight + ' lb' : 'Light/BW'} ${flagged ? '<span class="caution-badge">CAUTION</span>' : ''}</td><td>${w.pct}%</td></tr>`;
+      const noLoad = w.weight <= 0 && !w.edited;
+      html += `<tr><td>${i+1}</td><td>
+        <div class="wt-edit">
+          <button class="wt-btn" onclick="bumpWeight(${si},${i},-5)">−</button>
+          <input type="number" inputmode="numeric" step="5" min="0" class="wt-input ${w.edited ? 'wt-edited' : ''}" value="${w.weight || 0}" onchange="setWeightManual(${si},${i},this.value)" ${noLoad ? 'placeholder="BW"' : ''}>
+          <button class="wt-btn" onclick="bumpWeight(${si},${i},5)">+</button>
+        </div>
+        ${flagged ? '<div style="margin-top:4px;"><span class="caution-badge">CAUTION</span></div>' : ''}
+      </td><td>${section.oneRM > 0 && w.weight > 0 ? w.pct + '%' + (w.edited ? '<span style="color:var(--core);">*</span>' : '') : (noLoad ? 'BW' : '—')}</td></tr>`;
     });
     html += '</tbody></table>';
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:11px;color:var(--text3);">Feels off? Adjust — the log follows automatically.</div>
+      ${section.weights.some(w => w.edited) ? `<button class="wt-reset" onclick="resetWeights(${si})">Reset to plan</button>` : ''}
+    </div>`;
 
     if (section.accessory.length > 0) {
       html += '<div style="margin-top:10px;font-size:13px;color:var(--text3);font-weight:600;">Accessory (remaining time):</div>';
@@ -2989,6 +3041,120 @@ function skipWorkout() {
 }
 
 // ============================================================
+// INLINE WEIGHT EDITING — the rec is a starting point, not a command
+// ============================================================
+
+function bumpWeight(si, i, delta) {
+  if (!currentWod || !currentWod.sections[si] || !currentWod.sections[si].weights) return;
+  const w = currentWod.sections[si].weights[i];
+  setRoundWeight(si, i, Math.max(0, (w.weight || 0) + delta));
+}
+
+function setWeightManual(si, i, val) {
+  const n = parseInt(val, 10);
+  if (isNaN(n) || n < 0) { renderWodContent(currentWod); return; }
+  setRoundWeight(si, i, n);
+}
+
+function setRoundWeight(si, i, newWeight) {
+  const section = currentWod.sections[si];
+  const w = section.weights[i];
+  if (w.orig === undefined) w.orig = { weight: w.weight, pct: w.pct };
+  w.weight = newWeight;
+  w.edited = (newWeight !== w.orig.weight);
+  if (!w.edited) { w.pct = w.orig.pct; delete w.orig; }
+  else if (section.oneRM > 0) w.pct = Math.round(newWeight / section.oneRM * 100);
+  refreshHerniaFlags(section);
+  saveCurrentWod(currentWod);
+  syncLogRoundWeight(section, i);
+  renderWodContent(currentWod);
+}
+
+function resetWeights(si) {
+  const section = currentWod.sections[si];
+  section.weights.forEach((w, i) => {
+    if (w.orig !== undefined) {
+      w.weight = w.orig.weight;
+      w.pct = w.orig.pct;
+      delete w.orig;
+      w.edited = false;
+      syncLogRoundWeight(section, i);
+    }
+  });
+  refreshHerniaFlags(section);
+  saveCurrentWod(currentWod);
+  renderWodContent(currentWod);
+  showToast('Back to the plan');
+}
+
+function refreshHerniaFlags(section) {
+  if (!section.mainLift || section.oneRM <= 0) return;
+  const settings = getSettings();
+  section.herniaFlags = [];
+  section.weights.forEach((w, idx) => {
+    if (isHerniaFlagged(section.mainLift, w.pct, settings)) section.herniaFlags.push(idx);
+  });
+}
+
+function syncLogRoundWeight(section, i) {
+  const log = getCurrentLog();
+  if (!log || log.date !== currentWod.date || log.dayType !== currentWod.dayType) return;
+  const w = section.weights[i];
+  const entry = log.exercises.find(e => e.isMainLift && e.round === i + 1 && e.name === section.mainLift);
+  if (entry) {
+    entry.weight = w.weight;
+    entry.prescription = `Round ${i+1}: ${w.weight}lb (${w.pct}%) x ${section.reps}`;
+    saveCurrentLog(log);
+  }
+}
+
+// Strengthcon barbell station load
+function bumpStationWeight(si, ei, delta) {
+  if (!currentWod || !currentWod.sections[si] || !currentWod.sections[si].exercises) return;
+  const e = currentWod.sections[si].exercises[ei];
+  setStationWeight(si, ei, Math.max(0, (e.weight || 0) + delta));
+}
+
+function setStationWeightManual(si, ei, val) {
+  const n = parseInt(val, 10);
+  if (isNaN(n) || n < 0) { renderWodContent(currentWod); return; }
+  setStationWeight(si, ei, n);
+}
+
+function setStationWeight(si, ei, newWeight) {
+  const section = currentWod.sections[si];
+  const e = section.exercises[ei];
+  if (e.origWeight === undefined) e.origWeight = { weight: e.weight, pct: e.pct, reps: e.reps };
+  const oldReps = e.reps;
+  e.weight = newWeight;
+  e.edited = (newWeight !== e.origWeight.weight);
+  if (!e.edited) {
+    e.pct = e.origWeight.pct;
+    e.reps = e.origWeight.reps;
+    delete e.origWeight;
+  } else {
+    const rx = LOADING_RX[e.name];
+    const oneRM = rx && rx.oneRMKey ? (getSettings().oneRM[rx.oneRMKey] || 0) : 0;
+    e.pct = oneRM > 0 ? Math.round(newWeight / oneRM * 100) : e.pct;
+    const baseReps = parseInt(e.reps, 10) || (rx ? rx.reps : 8);
+    e.reps = `${baseReps} @ ${newWeight}lb${oneRM > 0 ? ` (${e.pct}%)` : ''}`;
+  }
+  saveCurrentWod(currentWod);
+  // Sync in-progress log entry
+  const log = getCurrentLog();
+  if (log && log.date === currentWod.date && log.dayType === currentWod.dayType) {
+    const entry = log.exercises.find(x => x.isMainLift && x.name === e.name && x.prescription === oldReps);
+    if (entry) { entry.weight = e.weight; entry.prescription = e.reps; saveCurrentLog(log); }
+  }
+  renderWodContent(currentWod);
+}
+
+function resetStationWeight(si, ei) {
+  const e = currentWod.sections[si].exercises[ei];
+  if (e.origWeight !== undefined) setStationWeight(si, ei, e.origWeight.weight);
+}
+
+// ============================================================
 // PER-EXERCISE SWAP
 // ============================================================
 
@@ -3552,7 +3718,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.6
+      FitBy50 v1.6.1
     </div>
   `;
 }
