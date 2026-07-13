@@ -839,27 +839,29 @@ const LOADING_RX = {
 
 const STRENGTH_FORMATS = [
   { rounds: 5, time: 180, label: '5 x 3:00', weight: 42 },
-  { rounds: 4, time: 210, label: '4 x 3:30', weight: 21 },
-  { rounds: 6, time: 120, label: '6 x 2:00', weight: 17 },
-  { rounds: 6, time: 150, label: '6 x 2:30', weight: 15 }
+  { rounds: 4, time: 210, label: '4 x 3:30', weight: 18 },
+  { rounds: 6, time: 120, label: '6 x 2:00', weight: 15 },
+  { rounds: 6, time: 150, label: '6 x 2:30', weight: 15 },
+  { rounds: 5, time: 150, label: '5 x 2:30', weight: 10 }
 ];
 
 const METCON_TYPES = [
-  { type: 'rft', label: 'Rounds for Time', weight: 41 },
-  { type: 'amrap', label: 'AMRAP', weight: 23 },
-  { type: 'rounds_cap', label: 'Rounds + Cap', weight: 8 },
-  { type: 'emom', label: 'EMOM', weight: 5 }
+  { type: 'stations', label: 'Station Intervals', weight: 35 },
+  { type: 'rft', label: 'Rounds for Time', weight: 25 },
+  { type: 'amrap', label: 'AMRAP', weight: 20 },
+  { type: 'rounds_cap', label: 'Rounds + Cap', weight: 12 },
+  { type: 'emom', label: 'EMOM', weight: 8 }
 ];
 
 const EXERCISES = {
-  push: ['DB Push Press', 'DB Floor Press', 'Push-ups', 'Diamond Push-ups', 'HR Push-ups', 'Decline Push-ups', 'DB Arnold Press', 'Ring Push-ups', 'DB Alt Bench Press', 'Clap Push-ups'],
-  pull: ['Ring Row', 'BB Inverted Row', 'DB Bent Over Row', 'Band Pull-Apart', 'DB Alt Snatch', 'KB Sumo DL High Pull', 'DB Bicep Curl', 'Chin-ups', 'DB 1-Arm Row'],
-  squat: ['Air Squat', 'DB Goblet Squat', 'Wall Ball', 'Alt Split Squat Jumps', 'Box Jumps', 'Plate OH Alt Front Lunge', 'DB Goblet Reverse Lunge', 'Alt Step-ups', 'Lateral Skater Jumps', 'BB Back Rack Alt Front Lunge'],
-  hinge: ['Russian KB Swing', 'KB RDL', 'DB Alt Gravedigger', 'KB Sumo Deadlift', 'DB Alt Snatch', 'Slamball', 'Hip Thrust'],
-  core: ['Frogman Sit-up', 'V-ups', 'Plate Twists', 'Mountain Climbers', 'Superman Hold', 'Hollow Rock', 'Bicycle Crunch', 'DB 6" Leg Raise', 'Star Sit-up', 'Side Plank w/ Rotation', 'Birddog Combo', 'Elbow Plank', 'Speed Sit-up', 'Heels to Heaven', 'Push-up Plank Alt Birddog', 'Band Pallof Press', 'Suitcase Carry (switch @ half)', 'Flutter Kicks', 'Reverse Crunch'],
+  push: ['DB Push Press', 'DB Floor Press', 'Push-ups', 'Diamond Push-ups', 'HR Push-ups', 'Decline Push-ups', 'DB Arnold Press', 'Ring Push-ups', 'DB Alt Bench Press', 'Clap Push-ups', 'DB Seated Military Press', 'DB Overhead Tricep Extension'],
+  pull: ['Ring Row', 'BB Inverted Row', 'DB Bent Over Row', 'Band Pull-Apart', 'DB Alt Snatch', 'KB Sumo DL High Pull', 'DB Bicep Curl', 'Chin-ups', 'DB 1-Arm Row', 'DB Renegade Row', 'Chest-on-Bench 2-DB Row', 'DB Alt Hammer Curl'],
+  squat: ['Air Squat', 'DB Goblet Squat', 'Wall Ball', 'Alt Split Squat Jumps', 'Box Jumps', 'Plate OH Alt Front Lunge', 'DB Goblet Reverse Lunge', 'Alt Step-ups', 'Lateral Skater Jumps', 'BB Back Rack Alt Front Lunge', 'KB Sumo Squat', 'Step-up Jumps'],
+  hinge: ['Russian KB Swing', 'KB RDL', 'DB Alt Gravedigger', 'KB Sumo Deadlift', 'DB Alt Snatch', 'Slamball', 'Hip Thrust', 'American KB Swing', 'Plate Ground to Overhead'],
+  core: ['Frogman Sit-up', 'V-ups', 'Plate Twists', 'Mountain Climbers', 'Superman Hold', 'Hollow Rock', 'Bicycle Crunch', 'DB 6" Leg Raise', 'Star Sit-up', 'Side Plank w/ Rotation', 'Birddog Combo', 'Elbow Plank', 'Speed Sit-up', 'Heels to Heaven', 'Push-up Plank Alt Birddog', 'Band Pallof Press', 'Suitcase Carry (switch @ half)', 'Flutter Kicks', 'Reverse Crunch', 'Iso Bicycle Crunch (L then R)', 'Oblique V-up (L then R)', 'Plate Sit-up', 'Suitcase V-Up', 'Dragonfly', 'WTD Elbow Plank', 'Elbow Plank Jacks', 'Toe Touch Crunch', 'V-sit Hold', 'Glider Alt Shoulder Taps'],
   conditioning: ['Battle Rope', 'Jump Rope', 'Assault Bike'],
-  metcon_combo: ['DB Thruster', 'Lionmaker', 'Burpee Box Jump Over', 'DB Burpee', 'Wall Ball', 'Slamball Twist & Tap', 'DB Alt Gravedigger'],
-  glute: ['Hip Thrust', 'KB Sumo Deadlift', 'DB Goblet Reverse Lunge', 'Lateral Skater Jumps', 'Banded Crab Walk', 'Glute Bridge', 'Single Leg RDL', 'Fire Hydrant']
+  metcon_combo: ['DB Thruster', 'Lionmaker', 'Burpee Box Jump Over', 'DB Burpee', 'Wall Ball', 'Slamball Twist & Tap', 'DB Alt Gravedigger', 'Bar Over Burpee', 'Plate Ground to Overhead'],
+  glute: ['Hip Thrust', 'KB Sumo Deadlift', 'DB Goblet Reverse Lunge', 'Lateral Skater Jumps', 'Banded Crab Walk', 'Glute Bridge', 'Single Leg RDL', 'Fire Hydrant', 'Donkey Kicks', 'Glute Bridge + Hold @ Top']
 };
 
 const WARMUP_DYNAMIC = ['Arm Circles', 'Leg Swings', 'Inchworm', 'World\'s Greatest Stretch', 'High Knees', 'Butt Kicks', 'Lateral Lunge', 'Toy Soldiers', 'Hip Circles', 'Cat-Cow', 'Thoracic Rotation', 'Walking Knee Hug', 'A-Skip', 'Carioca', 'Spiderman Lunge'];
@@ -951,6 +953,13 @@ const CUES = {
   'Elbow Plank': 'Squeeze glutes, tuck ribs — a plank is active, not a rest.',
   'Birddog Combo': 'Slow and square — don\'t let the hips tip.',
   'Assault Bike': 'Settle into a rhythm — nose-breathing pace means truly easy.',
+  'Plate Ground to Overhead': 'Hinge to grab, stand tall, punch it overhead — one smooth arc.',
+  'DB Renegade Row': 'Wide feet, hips quiet — the plank matters more than the row.',
+  'American KB Swing': 'Same hip snap, finish overhead — shorten the range if the shoulders say so.',
+  'Dragonfly': 'Legs up and over slowly — lower with control, back stays on the bench.',
+  'Suitcase V-Up': 'Knees tuck to chest, shoulders lift — exhale at the fold.',
+  'Bar Over Burpee': 'Step or jump the bar — pace it so the barbell work stays crisp.',
+  'BB Hang Power Clean': 'Bar close, elbows fast — catch tall, not deep.',
   'Battle Rope': 'Whole body, not just arms — hips and breath set the tempo.',
   'Jump Rope': 'Tall posture, wrists spin, soft ankles.'
 };
@@ -1885,7 +1894,13 @@ function generateMetcon(rng, settings) {
   });
 
   let format, timerConfig;
-  if (metType.type === 'rft') {
+  if (metType.type === 'stations') {
+    // The dominant 2025 BLF format: timed station intervals
+    const rounds = [3, 4, 5][Math.floor(rng() * 3)];
+    const scheme = rng() < 0.6 ? [40, 20] : [30, 15];
+    format = `${rounds} RDS — :${scheme[0]} work / :${scheme[1]} rest`;
+    timerConfig = { mode: 'interval', work: scheme[0], rest: scheme[1], rounds: rounds, stations: exList.length };
+  } else if (metType.type === 'rft') {
     const rounds = [3, 4, 5][Math.floor(rng() * 3)];
     format = `${rounds} RDS For Time`;
     timerConfig = { mode: 'forTime', rounds: rounds, cap: rounds * 4 * 60 };
@@ -2464,7 +2479,9 @@ function renderSection(section, si) {
     html += `<div class="card-meta">${section.format}</div>`;
     html += exListHtml(section, si, (e) => (section.herniaMode && section.herniaExercises.includes(e.name)) ? '<span class="caution-badge">Scale</span>' : '');
     const tc = section.timerConfig;
-    if (tc.mode === 'amrap') {
+    if (tc.mode === 'interval') {
+      html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('interval', ${tc.work}, ${tc.rest}, ${tc.rounds}, ${tc.stations}, ${si})">START TIMER</button></div>`;
+    } else if (tc.mode === 'amrap') {
       html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('amrap', ${tc.duration}, 0, 0, 0, ${si})">START TIMER</button></div>`;
     } else if (tc.mode === 'forTime') {
       html += `<div style="margin-top:12px"><button class="btn btn-metcon btn-sm" onclick="openTimerConfig('forTime', ${tc.cap}, 0, ${tc.rounds || 0}, 0, ${si})">START TIMER</button></div>`;
@@ -4243,7 +4260,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.7.0 · Programming inspired by Blue Lion Fitness
+      FitBy50 v1.7.1 · Programming inspired by Blue Lion Fitness
     </div>
   `;
 }
