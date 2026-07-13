@@ -858,7 +858,7 @@ const EXERCISES = {
   pull: ['Ring Row', 'BB Inverted Row', 'DB Bent Over Row', 'Band Pull-Apart', 'DB Alt Snatch', 'KB Sumo DL High Pull', 'DB Bicep Curl', 'Chin-ups', 'DB 1-Arm Row', 'DB Renegade Row', 'Chest-on-Bench 2-DB Row', 'DB Alt Hammer Curl'],
   squat: ['Air Squat', 'DB Goblet Squat', 'Wall Ball', 'Alt Split Squat Jumps', 'Box Jumps', 'Plate OH Alt Front Lunge', 'DB Goblet Reverse Lunge', 'Alt Step-ups', 'Lateral Skater Jumps', 'BB Back Rack Alt Front Lunge', 'KB Sumo Squat', 'Step-up Jumps'],
   hinge: ['Russian KB Swing', 'KB RDL', 'DB Alt Gravedigger', 'KB Sumo Deadlift', 'DB Alt Snatch', 'Slamball', 'Hip Thrust', 'American KB Swing', 'Plate Ground to Overhead'],
-  core: ['Frogman Sit-up', 'V-ups', 'Plate Twists', 'Mountain Climbers', 'Superman Hold', 'Hollow Rock', 'Bicycle Crunch', 'DB 6" Leg Raise', 'Star Sit-up', 'Side Plank w/ Rotation', 'Birddog Combo', 'Elbow Plank', 'Speed Sit-up', 'Heels to Heaven', 'Push-up Plank Alt Birddog', 'Band Pallof Press', 'Suitcase Carry (switch @ half)', 'Flutter Kicks', 'Reverse Crunch', 'Iso Bicycle Crunch (L then R)', 'Oblique V-up (L then R)', 'Plate Sit-up', 'Suitcase V-Up', 'Dragonfly', 'WTD Elbow Plank', 'Elbow Plank Jacks', 'Toe Touch Crunch', 'V-sit Hold', 'Glider Alt Shoulder Taps'],
+  core: ['Frogman Sit-up', 'V-ups', 'Plate Twists', 'Mountain Climbers', 'Superman Hold', 'Hollow Rock', 'Bicycle Crunch', 'DB 6" Leg Raise', 'Star Sit-up', 'Side Plank w/ Rotation', 'Birddog Combo', 'Elbow Plank', 'Speed Sit-up', 'Heels to Heaven', 'Push-up Plank Alt Birddog', 'Band Pallof Press', 'Suitcase Carry (switch @ half)', 'Flutter Kicks', 'Reverse Crunch', 'Iso Bicycle Crunch (L then R)', 'Oblique V-up (L then R)', 'Plate Sit-up', 'Suitcase V-Up', 'Dragonfly', 'WTD Elbow Plank', 'Elbow Plank Jacks', 'Toe Touch Crunch', 'V-sit Hold', 'Glider Alt Shoulder Taps', 'Scissor Kicks', 'Straight-Leg Sit-up', 'Plate Russian Twist'],
   conditioning: ['Battle Rope', 'Jump Rope', 'Assault Bike'],
   metcon_combo: ['DB Thruster', 'Lionmaker', 'Burpee Box Jump Over', 'DB Burpee', 'Wall Ball', 'Slamball Twist & Tap', 'DB Alt Gravedigger', 'Bar Over Burpee', 'Plate Ground to Overhead'],
   glute: ['Hip Thrust', 'KB Sumo Deadlift', 'DB Goblet Reverse Lunge', 'Lateral Skater Jumps', 'Banded Crab Walk', 'Glute Bridge', 'Single Leg RDL', 'Fire Hydrant', 'Donkey Kicks', 'Glute Bridge + Hold @ Top']
@@ -1897,8 +1897,10 @@ function generateMetcon(rng, settings) {
   if (metType.type === 'stations') {
     // The dominant 2025 BLF format: timed station intervals
     const rounds = [3, 4, 5][Math.floor(rng() * 3)];
-    const scheme = rng() < 0.6 ? [40, 20] : [30, 15];
-    format = `${rounds} RDS — :${scheme[0]} work / :${scheme[1]} rest`;
+    const schemes = [[40, 20], [40, 20], [30, 15], [45, 15], [60, 30]]; // weighted, per BLF frequency
+    const scheme = schemes[Math.floor(rng() * schemes.length)];
+    const fmtSec = (n) => n >= 60 ? '1:00' : ':' + n;
+    format = `${rounds} RDS — ${fmtSec(scheme[0])} work / ${fmtSec(scheme[1])} rest`;
     timerConfig = { mode: 'interval', work: scheme[0], rest: scheme[1], rounds: rounds, stations: exList.length };
   } else if (metType.type === 'rft') {
     const rounds = [3, 4, 5][Math.floor(rng() * 3)];
@@ -4260,7 +4262,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.7.1 · Programming inspired by Blue Lion Fitness
+      FitBy50 v1.7.2 · Programming inspired by Blue Lion Fitness
     </div>
   `;
 }
