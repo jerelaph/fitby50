@@ -1,6 +1,6 @@
 // FitBy50 service worker — offline-first app shell.
 // Bump CACHE_VERSION on every release so clients pick up the new build.
-const CACHE_VERSION = 'fb50-v1.7.2';
+const CACHE_VERSION = 'fb50-v1.7.3';
 const APP_SHELL = [
   './',
   './index.html',

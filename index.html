@@ -2115,6 +2115,12 @@ function renderToday() {
   renderReadinessCard();
   renderRotation();
   renderWodContent(currentWod);
+
+  // Skip button semantics differ by day type
+  const skipBtn = document.getElementById('btn-skip-workout');
+  if (skipBtn) {
+    skipBtn.textContent = (currentDayType === 'weekday' || currentDayType === 'saturday') ? 'NEXT LIFT ↻' : 'SHUFFLE ↻';
+  }
 }
 
 // "X days to 50 — Y workouts banked"
@@ -3453,11 +3459,22 @@ function updateAdjustmentsFromLog(log) {
 }
 
 function skipWorkout() {
-  setShuffleCount(getShuffleCount() + 1);
+  const strengthDay = currentDayType === 'weekday' || currentDayType === 'saturday';
+  if (strengthDay) {
+    // Advance the lift rotation: squat → bench → deadlift → press.
+    // Logging later continues the rotation from wherever you land.
+    setRotationIndex(getRotationIndex() + 1);
+    setShuffleCount(getShuffleCount() + 1); // fresh accessories/metcon too
+    const cat = LIFT_ROTATION[getRotationIndex()];
+    const labels = { squat: 'SQUAT', bench: 'BENCH (push)', deadlift: 'DEADLIFT (hinge)', press: 'PRESS (push)' };
+    showToast('Strength focus → ' + (labels[cat] || cat.toUpperCase()));
+  } else {
+    setShuffleCount(getShuffleCount() + 1);
+    showToast('Shuffled — new workout generated');
+  }
   localStorage.removeItem(STORAGE_KEYS.currentWod);
   localStorage.removeItem(STORAGE_KEYS.currentLog);
   renderToday();
-  showToast('Shuffled — new workout generated');
 }
 
 // ============================================================
@@ -4262,7 +4279,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.7.2 · Programming inspired by Blue Lion Fitness
+      FitBy50 v1.7.3 · Programming inspired by Blue Lion Fitness
     </div>
   `;
 }
