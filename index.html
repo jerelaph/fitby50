@@ -778,6 +778,10 @@ input[type="number"] { width: 90px; text-align: center; }
   <div class="timer-exercise-list" id="timer-exercise-list"></div>
   <div class="timer-progress"><div class="timer-progress-bar" id="timer-progress-bar" style="width:0%;background:var(--success);"></div></div>
   <div class="timer-controls">
+    <div id="timer-lap-wrap" style="display:none;">
+      <button class="timer-btn" id="timer-btn-lap" onclick="markRoundDone()" style="background:var(--success);color:#fff;">✓</button>
+      <div class="timer-label">Round done</div>
+    </div>
     <div>
       <button class="timer-btn timer-btn-pause" id="timer-btn-pause" onclick="toggleTimerPause()">| |</button>
       <div class="timer-label">Pause</div>
@@ -852,7 +856,7 @@ const EXERCISES = {
   pull: ['Ring Row', 'BB Inverted Row', 'DB Bent Over Row', 'Band Pull-Apart', 'DB Alt Snatch', 'KB Sumo DL High Pull', 'DB Bicep Curl', 'Chin-ups', 'DB 1-Arm Row'],
   squat: ['Air Squat', 'DB Goblet Squat', 'Wall Ball', 'Alt Split Squat Jumps', 'Box Jumps', 'Plate OH Alt Front Lunge', 'DB Goblet Reverse Lunge', 'Alt Step-ups', 'Lateral Skater Jumps', 'BB Back Rack Alt Front Lunge'],
   hinge: ['Russian KB Swing', 'KB RDL', 'DB Alt Gravedigger', 'KB Sumo Deadlift', 'DB Alt Snatch', 'Slamball', 'Hip Thrust'],
-  core: ['Frogman Sit-up', 'V-ups', 'Plate Twists', 'Mountain Climbers', 'Superman Hold', 'Hollow Rock', 'Bicycle Crunch', 'DB 6" Leg Raise', 'Star Sit-up', 'Side Plank w/ Rotation', 'Birddog Combo', 'Elbow Plank', 'Speed Sit-up', 'Heels to Heaven', 'Push-up Plank Alt Birddog'],
+  core: ['Frogman Sit-up', 'V-ups', 'Plate Twists', 'Mountain Climbers', 'Superman Hold', 'Hollow Rock', 'Bicycle Crunch', 'DB 6" Leg Raise', 'Star Sit-up', 'Side Plank w/ Rotation', 'Birddog Combo', 'Elbow Plank', 'Speed Sit-up', 'Heels to Heaven', 'Push-up Plank Alt Birddog', 'Band Pallof Press', 'Suitcase Carry (switch @ half)', 'Flutter Kicks', 'Reverse Crunch'],
   conditioning: ['Battle Rope', 'Jump Rope', 'Assault Bike'],
   metcon_combo: ['DB Thruster', 'Lionmaker', 'Burpee Box Jump Over', 'DB Burpee', 'Wall Ball', 'Slamball Twist & Tap', 'DB Alt Gravedigger'],
   glute: ['Hip Thrust', 'KB Sumo Deadlift', 'DB Goblet Reverse Lunge', 'Lateral Skater Jumps', 'Banded Crab Walk', 'Glute Bridge', 'Single Leg RDL', 'Fire Hydrant']
@@ -881,6 +885,79 @@ const HOME_SUBS = {
 
 const HERNIA_FLAGS = ['Lionmaker', 'BB Deadlift', 'Heavy Clean', 'Power Clean', 'Squat Clean'];
 
+// Carries & grip — hernia-protective bracing under load, top longevity ROI
+const CARRIES = ['Farmer\'s Carry', 'Suitcase Carry (switch @ half)', 'DB Front-Rack Carry', 'KB Rack Carry', 'Plate Pinch Hold'];
+
+// Power primer pool — done FRESH after warm-up, full rest, max intent
+const POWER_MOVES = [
+  { name: 'Box Jumps', rx: '3 x 3 — step down' },
+  { name: 'Broad Jumps', rx: '3 x 3 — stick the landing' },
+  { name: 'Slamball Squat Jump', rx: '3 x 3 — explode up' },
+  { name: 'MedBall Chest Throw', rx: '3 x 4 — throw hard' },
+  { name: 'DB Push Press (light/fast)', rx: '3 x 3 — bar speed is the goal' }
+];
+
+// Periodization phases — driven by the strength-session counter.
+// Each rotation cycle (4 sessions) advances the phase; every 4th cycle deloads.
+const PHASES = [
+  { key: 'volume',   label: 'VOLUME',   note: 'Build the base — smooth reps, full range.' },
+  { key: 'strength', label: 'STRENGTH', note: 'Heavier, fewer reps. Grind, don\'t fail.' },
+  { key: 'peak',     label: 'PEAK',     note: 'Top-end work. Crisp singles-energy, long rests.' },
+  { key: 'deload',   label: 'DELOAD',   note: 'Lighter on purpose — recovery is where gains land.' }
+];
+
+// Fun Saturday WOD names, BLF-style
+const WOD_NAMES = ['Leprechauns Are Real', 'Basement Banger', 'The Grindhouse', 'Lion\'s Share', 'Iron Sunrise', 'The Long Haul', 'Rust Buster', 'Garage Thunder', 'Old Man Strength', 'The Equalizer', 'Second Wind', 'Blue Collar'];
+
+// One-line coaching cues — shown at the point of use
+const CUES = {
+  'BB Back Squat': 'Big brace before you unrack — knees out, drive the floor apart.',
+  'BB Front Squat': 'Elbows high, ribs down — the rack position IS the exercise.',
+  'BB Box Squat': 'Sit back to the box under control — no plopping, stay tight.',
+  'BB Bench Press': 'Shoulder blades pinned, feet planted — bar touches, doesn\'t bounce.',
+  'BB Incline Bench': 'Tuck elbows ~45° — touch high on the chest.',
+  'BB Deadlift': 'Brace hard BEFORE you pull — exhale through the sticking point, never hold into strain.',
+  'BB Good Morning': 'Soft knees, push hips back — stop when hamstrings say stop.',
+  'BB Push Press': 'Dip straight down, drive straight up — legs start it, arms finish it.',
+  'BB Strict Press': 'Squeeze glutes and ribs down — no lean-back to finish.',
+  'DB Military Press': 'Stack wrists over elbows — press slightly back to lockout.',
+  'Farmer\'s Carry': 'Tall posture, crush grip, smooth steps — a moving plank.',
+  'Suitcase Carry (switch @ half)': 'Don\'t lean away from the load — that fight is the exercise.',
+  'DB Front-Rack Carry': 'Elbows up, ribs down — breathe behind the brace.',
+  'KB Rack Carry': 'Own the rack position — shoulder packed, core square.',
+  'Plate Pinch Hold': 'Fingertips only — squeeze like it\'s trying to escape.',
+  'Band Pallof Press': 'Press slow, resist the twist — hips and shoulders square.',
+  'Box Jumps': 'Land soft and quiet — ALWAYS step down, never rebound.',
+  'Broad Jumps': 'Arms throw you forward — stick the landing in a half squat.',
+  'Slamball Squat Jump': 'Full hip extension at the top — reset each rep.',
+  'MedBall Chest Throw': 'Throw it like you mean it — power is intent.',
+  'DB Push Press (light/fast)': 'Light load, max bar speed — if it slows down, rest more.',
+  'Russian KB Swing': 'Hips snap, arms just steer — shoulder height is plenty.',
+  'KB RDL': 'Hinge, don\'t squat — flat back, weight in heels.',
+  'KB Sumo Deadlift': 'Chest up, knees track over toes — push the floor away.',
+  'Hip Thrust': 'Chin tucked, ribs down — squeeze the top for a full second.',
+  'DB Goblet Squat': 'Elbows inside knees — sit tall between your heels.',
+  'Wall Ball': 'Ride the squat into the throw — one fluid motion.',
+  'DB Thruster': 'The squat drives the press — don\'t pause in the middle.',
+  'Burpee Box Jump Over': 'Pace the burpee, own the jump — smooth beats fast.',
+  'Ring Row': 'Body rigid like a plank — pull the rings to your ribs.',
+  'DB Bent Over Row': 'Flat back, pull to the hip — no torso heave.',
+  'Chin-ups': 'Full hang to chin over — control the way down.',
+  'Push-ups': 'One straight line, head to heels — elbows ~45°.',
+  'HR Push-ups': 'Hands OFF the floor at the bottom — full reset every rep.',
+  'V-ups': 'Reach for your toes, exhale at the top.',
+  'Hollow Rock': 'Low back glued to the floor — small rocks, constant tension.',
+  'Superman Hold': 'Squeeze glutes and mid-back — long body, not high body.',
+  'Elbow Plank': 'Squeeze glutes, tuck ribs — a plank is active, not a rest.',
+  'Birddog Combo': 'Slow and square — don\'t let the hips tip.',
+  'Assault Bike': 'Settle into a rhythm — nose-breathing pace means truly easy.',
+  'Battle Rope': 'Whole body, not just arms — hips and breath set the tempo.',
+  'Jump Rope': 'Tall posture, wrists spin, soft ankles.'
+};
+
+// Hernia-aware bracing cue appended to flagged movements
+const HERNIA_CUE = 'Brace 360° before the rep, exhale through the effort — stop at any pull or pressure at the site.';
+
 // ============================================================
 // STORAGE & STATE
 // ============================================================
@@ -894,6 +971,7 @@ const STORAGE_KEYS = {
   shuffleCount: 'fb50_shuffle_count',
   githubToken: 'fb50_github_token',
   githubSha: 'fb50_github_sha',
+  disclaimerAck: 'fb50_disclaimer_ack',
   strengthCount: 'fb50_strength_count',
   adjustments: 'fb50_adjustments',
   plannedNext: 'fb50_planned_next',
@@ -908,7 +986,12 @@ function getSettings() {
     height: 72,
     equipment: 'home',
     herniaMode: true,
+    herniaPhase: 1,
+    herniaCleanCount: 0,
     birthday: '',
+    timerSound: 'beep',
+    z2Target: 90,
+    lastBackup: '',
     oneRM: {
       backSquat: 275,
       benchPress: 225,
@@ -1452,12 +1535,36 @@ function filterForEquipment(exercises, equipment) {
   return exercises.filter(e => e !== 'Chin-ups').map(e => HOME_SUBS[e] || e);
 }
 
+// Hernia recovery is GRADED EXPOSURE, not a life sentence.
+// Phase 1: DL flagged >75%, loads capped ~78%, RPE 7
+// Phase 2: DL flagged >82%, loads capped ~84%, RPE 8
+// Phase 3: monitoring only — flags off except ballistic cleans
+function herniaPhaseRules(settings) {
+  const p = settings.herniaPhase || 1;
+  if (p >= 3) return { phase: 3, dlFlagPct: 999, pctCap: 999, rpeNote: 'Phase 3 — monitoring. Full loading, keep the brace habits.' };
+  if (p === 2) return { phase: 2, dlFlagPct: 82, pctCap: 84, rpeNote: 'RPE Cap: 8 — Phase 2. Heavier is earned; keep 2 reps in the tank.' };
+  return { phase: 1, dlFlagPct: 75, pctCap: 78, rpeNote: 'RPE Cap: 7 — Phase 1. Focus on form & midline stability.' };
+}
+
 function isHerniaFlagged(exerciseName, pct, settings) {
   if (!settings.herniaMode) return false;
+  const rules = herniaPhaseRules(settings);
   if (exerciseName === 'Lionmaker') return true;
-  if (exerciseName === 'BB Deadlift' && pct > 75) return true;
-  if (HERNIA_FLAGS.some(f => exerciseName.includes(f) && exerciseName !== 'BB Deadlift')) return true;
+  if (exerciseName === 'BB Deadlift' && pct > rules.dlFlagPct) return true;
+  if (rules.phase < 3 && HERNIA_FLAGS.some(f => exerciseName.includes(f) && exerciseName !== 'BB Deadlift')) return true;
+  if (rules.phase >= 3 && ['Heavy Clean', 'Power Clean', 'Squat Clean'].some(f => exerciseName.includes(f))) return true;
   return false;
+}
+
+// Current periodization phase from the strength-session counter
+function currentPhase() {
+  return PHASES[Math.floor(getStrengthCount() / 4) % 4];
+}
+
+// Every 16 strength sessions (~1 quarter of cycles): benchmark day
+function isBenchmarkDay() {
+  const c = getStrengthCount();
+  return c > 0 && c % 16 === 0;
 }
 
 // ============================================================
@@ -1602,7 +1709,9 @@ function generateWarmup(liftCategory, rng) {
   const specific = liftCategory ? (WARMUP_BY_LIFT[liftCategory] || WARMUP_DYNAMIC) : WARMUP_DYNAMIC;
   const general = pickN(WARMUP_DYNAMIC, 3, rng);
   const spec = pickN(specific, 3, rng);
-  const combined = [...new Set([...general, ...spec])].slice(0, 6);
+  const combined = [...new Set([...general, ...spec])].slice(0, 5);
+  // BLF-style: always open on the machine — blood flow before movement prep
+  const machine = getSettings().equipment === 'ymca' ? 'Row or Bike — easy' : 'Assault Bike — easy';
   return {
     type: 'warmup',
     label: 'WARM-UP',
@@ -1610,7 +1719,7 @@ function generateWarmup(liftCategory, rng) {
     rounds: 2,
     work: 45,
     rest: 15,
-    exercises: combined.map(e => ({ name: e, reps: ':45' }))
+    exercises: [{ name: machine, reps: ':45', isBarbell: false }, ...combined.map(e => ({ name: e, reps: ':45' }))]
   };
 }
 
@@ -1628,12 +1737,40 @@ function generateStrength(rotIdx, settings, rng) {
   const adjFactor = (oneRMKey && adjustments[oneRMKey]) ? adjustments[oneRMKey] : 1;
   if (adjFactor < 1) oneRM = Math.round(oneRM * adjFactor);
 
-  // Deload: every 4th rotation cycle drops intensity ~30% on purpose
-  const deload = isDeloadCycle();
+  // Periodization: the stimulus waves across cycles instead of repeating.
+  const phase = currentPhase();
+  const benchmark = isBenchmarkDay();
+  const deload = phase.key === 'deload';
+  const herniaRules = settings.herniaMode ? herniaPhaseRules(settings) : null;
+  const pctCap = herniaRules ? herniaRules.pctCap : 92;
 
+  let reps = rx ? rx.reps : 8;
   let buildPattern = rx ? rx.buildPattern : [60,65,70,75,80];
+  let tempoNote = '';
+
   if (deload) {
     buildPattern = buildPattern.map(p => Math.max(40, Math.round(p * 0.7)));
+  } else if (phase.key === 'strength') {
+    reps = Math.max(4, reps - 3);
+    buildPattern = buildPattern.map(p => Math.min(pctCap, p + 5));
+  } else if (phase.key === 'peak') {
+    if (settings.herniaMode && (herniaRules.phase < 3)) {
+      // Hernia phases 1-2: peak via TEMPO, not top-end load (BLF-style pauses)
+      reps = Math.max(4, reps - 3);
+      buildPattern = buildPattern.map(p => Math.min(pctCap, p + 3));
+      tempoNote = 'First 3 reps each round w/ (:03) pause at the hard point — control is the overload.';
+    } else {
+      reps = 3;
+      buildPattern = buildPattern.map(p => Math.min(pctCap, p + 10));
+    }
+  } else {
+    // volume phase: pattern as prescribed, cap for hernia safety
+    buildPattern = buildPattern.map(p => Math.min(pctCap, p));
+  }
+
+  if (benchmark) {
+    reps = 5;
+    buildPattern = [50, 60, 70, 78, 84].map(p => Math.min(pctCap, p));
   }
   // Adjust pattern length to match rounds
   if (format.rounds !== buildPattern.length) {
@@ -1651,10 +1788,11 @@ function generateStrength(rotIdx, settings, rng) {
     weight: calcWeight(oneRM, pct)
   }));
 
-  // Accessory for remaining time
+  // Accessory for remaining time (deadlift day always offers a carry —
+  // grip + brace work is the point of the hinge day)
   const accessoryPool = liftCat === 'squat' ? EXERCISES.squat :
                         liftCat === 'bench' ? EXERCISES.push :
-                        liftCat === 'deadlift' ? EXERCISES.hinge :
+                        liftCat === 'deadlift' ? [...EXERCISES.hinge, ...CARRIES] :
                         EXERCISES.push;
   const accessory = pickN(filterForEquipment(accessoryPool, settings.equipment), 2, rng);
 
@@ -1670,9 +1808,13 @@ function generateStrength(rotIdx, settings, rng) {
     label: 'STRENGTH',
     liftCategory: liftCat,
     mainLift: mainLift,
-    format: format.label,
+    format: benchmark ? '5 x 3:00 — BENCHMARK' : format.label,
     formatDetail: format,
-    reps: rx ? rx.reps : 8,
+    reps: reps,
+    phaseKey: benchmark ? 'benchmark' : phase.key,
+    phaseLabel: benchmark ? 'BENCHMARK' : phase.label,
+    phaseNote: benchmark ? 'Build to a solid top set of 5 — this re-validates your e1RM. Log every round.' : phase.note,
+    tempoNote: tempoNote,
     buildPattern: buildPattern,
     weights: weights,
     oneRM: oneRM,
@@ -1685,6 +1827,23 @@ function generateStrength(rotIdx, settings, rng) {
 }
 
 function generateCore(rng, equipment) {
+  // BLF-style variety: interval rounds or a 5-min AMRAP with rep targets
+  const amrap = rng() < 0.4;
+  if (amrap) {
+    const exercises = pickN(EXERCISES.core, 4, rng);
+    const repOpts = ['15 reps', '20 reps', '12 ea', '10 ea', ':30 hold'];
+    return {
+      type: 'core',
+      label: 'CORE',
+      format: '5 MIN AMRAP',
+      coreAmrap: true,
+      duration: 5 * 60,
+      exercises: exercises.map(e => ({
+        name: applyEquipSubs(e, equipment),
+        reps: repOpts[Math.floor(rng() * repOpts.length)]
+      }))
+    };
+  }
   const exercises = pickN(EXERCISES.core, 5, rng);
   return {
     type: 'core',
@@ -1761,11 +1920,46 @@ function generateMetcon(rng, settings) {
 
 function generateWeekday(wod, settings, rotIdx, rng) {
   const liftCat = LIFT_ROTATION[rotIdx];
-  // Session order: warm-up → core → strength → metcon
+  // Session order: warm-up → (power) → core → strength → metcon → optional Z2
   wod.sections.push(generateWarmup(liftCat, rng));
+
+  // Power primer once a week: first weekday session of the week, done FRESH.
+  // Explosive capacity fades ~2x faster than strength after 50 — and it only
+  // trains when you're not tired.
+  const monday = mondayOf(wod.date);
+  const weekdayDoneThisWeek = getHistory().some(h =>
+    h.dayType === 'weekday' && h.date >= monday && h.date < wod.date
+  );
+  if (!weekdayDoneThisWeek) {
+    let pool = POWER_MOVES.filter(m => !(settings.herniaMode && herniaPhaseRules(settings).phase === 1 && m.name === 'Broad Jumps'));
+    const pick = pool[Math.floor(rng() * pool.length)];
+    wod.sections.push({
+      type: 'power',
+      label: 'POWER PRIMER',
+      format: pick.rx + ' — FULL rest between sets',
+      powerNote: 'Fresh, crisp, explosive. If a rep slows down, rest longer. This is skill work, not conditioning.',
+      exercises: [{ name: pick.name, reps: pick.rx }]
+    });
+  }
+
   wod.sections.push(generateCore(rng, settings.equipment));
   wod.sections.push(generateStrength(rotIdx, settings, rng));
   wod.sections.push(generateMetcon(rng, settings));
+
+  // Optional Zone 2 flush — easy spin, counts toward the weekly Z2 goal
+  const flushMin = [10, 12, 15][Math.floor(rng() * 3)];
+  wod.sections.push({
+    type: 'recovery-cardio',
+    label: 'ZONE 2 FLUSH — OPTIONAL',
+    format: `${flushMin} min — nose-breathing pace`,
+    protocol: [
+      { label: 'Machine', detail: settings.equipment === 'ymca' ? 'Bike, rower, or incline walk' : 'Assault bike — easy spin' },
+      { label: 'Effort', detail: 'Conversational. If you can\'t nose-breathe, slow down.' }
+    ],
+    duration: flushMin,
+    optional: true
+  });
+
   return wod;
 }
 
@@ -1790,6 +1984,9 @@ function generateSaturday(wod, settings, rotIdx, rng) {
   const bbPct = rx ? Math.floor((rx.pctRange[0] + rx.pctRange[1]) / 2) : 65;
   const bbWeight = calcWeight(oneRM, bbPct);
 
+  // Weekly carry guarantee — grip and brace work lives here
+  const carry = CARRIES[Math.floor(rng() * CARRIES.length)];
+
   let stations = [
     { name: bbLift, reps: `${rx ? rx.reps : 8} @ ${bbWeight}lb (${bbPct}%)`, isBarbell: true, weight: bbWeight, pct: bbPct },
     ...combo.map(e => ({ name: applyEquipSubs(e, settings.equipment), reps: '10' })),
@@ -1799,11 +1996,13 @@ function generateSaturday(wod, settings, rotIdx, rng) {
     ...hinge.map(e => ({ name: applyEquipSubs(e, settings.equipment), reps: '12' })),
     ...cond.map(e => ({ name: applyEquipSubs(e, settings.equipment), reps: '15 Cal' }))
   ];
-  stations = [...new Map(stations.map(s => [s.name, s])).values()].slice(0, 8);
+  stations = [...new Map(stations.map(s => [s.name, s])).values()].slice(0, 7);
+  stations.push({ name: carry, reps: carry === 'Plate Pinch Hold' ? ':40 hold' : '40 yd (or :40)' });
 
   wod.sections.push({
     type: 'strengthcon',
     label: 'STRENGTHCON',
+    wodName: WOD_NAMES[Math.floor(rng() * WOD_NAMES.length)],
     liftCategory: liftCat,
     format: '5 RDS or 30 MIN Cap',
     rounds: 5,
@@ -2068,9 +2267,10 @@ function renderWeekTracker() {
   }
 
   const stats = computeWeekStats(history);
+  const z2Target = getSettings().z2Target || 90;
   const activeGoal = stats.active >= 3;
   const intenseGoal = stats.intense >= 3;
-  const z2Goal = stats.z2 >= 90;
+  const z2Goal = stats.z2 >= z2Target;
 
   const streaks = computeStreaks(history);
   let streakHtml = '';
@@ -2099,7 +2299,7 @@ function renderWeekTracker() {
       </div>
       <div class="week-goal ${z2Goal ? 'hit' : ''}">
         <div class="week-goal-dot"></div>
-        ${stats.z2}/90 Z2 min
+        ${stats.z2}/${z2Target} Z2 min
       </div>
     </div>
     ${streakHtml}
@@ -2123,7 +2323,7 @@ function renderWodContent(wod) {
   // Section progress dots
   html += '<div class="section-progress">';
   wod.sections.forEach(s => {
-    const colorMap = { warmup: 'var(--warmup)', strength: 'var(--strength)', core: 'var(--core)', metcon: 'var(--metcon)', strengthcon: 'var(--strengthcon)', hiit: 'var(--hiit)', glute: 'var(--core)', 'recovery-warmup': 'var(--recovery)', 'recovery-cardio': 'var(--recovery)' };
+    const colorMap = { warmup: 'var(--warmup)', strength: 'var(--strength)', core: 'var(--core)', metcon: 'var(--metcon)', strengthcon: 'var(--strengthcon)', hiit: 'var(--hiit)', power: 'var(--hiit)', glute: 'var(--core)', 'recovery-warmup': 'var(--recovery)', 'recovery-cardio': 'var(--recovery)' };
     html += `<div class="section-dot" style="background:${colorMap[s.type] || 'var(--bg4)'}"></div>`;
   });
   html += '</div>';
@@ -2146,9 +2346,12 @@ function exListHtml(section, si, flagFn) {
   section.exercises.forEach((e, ei) => {
     const swappable = !e.isBarbell;
     const flag = flagFn ? (flagFn(e) || '') : '';
+    const nameHtml = CUES[e.name]
+      ? `<span onclick="showCue(this.dataset.n)" data-n="${e.name.replace(/"/g, '&quot;')}" style="border-bottom:1px dotted var(--text3);cursor:pointer;">${e.name}</span>`
+      : e.name;
     if (e.isBarbell && typeof e.weight === 'number') {
       // Barbell station: prescribed load is editable in place
-      h += `<li style="flex-wrap:wrap;">${e.name} ${flag}<span class="exercise-rep">${e.reps}</span>
+      h += `<li style="flex-wrap:wrap;">${nameHtml} ${flag}<span class="exercise-rep">${e.reps}</span>
         <div class="station-wt" style="flex-basis:100%;">
           <span class="station-wt-label">Load:</span>
           <button class="wt-btn" onclick="bumpStationWeight(${si},${ei},-5)">−</button>
@@ -2158,7 +2361,7 @@ function exListHtml(section, si, flagFn) {
         </div>
       </li>`;
     } else {
-      h += `<li>${swappable ? `<button class="ex-swap" onclick="swapExercise(${si},${ei})" title="Swap this exercise">⇄</button>` : ''}${e.name} ${flag}<span class="exercise-rep">${e.reps}</span></li>`;
+      h += `<li>${swappable ? `<button class="ex-swap" onclick="swapExercise(${si},${ei})" title="Swap this exercise">⇄</button>` : ''}${nameHtml} ${flag}<span class="exercise-rep">${e.reps}</span></li>`;
     }
   });
   h += '</ul>';
@@ -2167,7 +2370,7 @@ function exListHtml(section, si, flagFn) {
 
 function renderSection(section, si) {
   const settings = getSettings();
-  const typeClass = section.type === 'glute' ? 'core' : section.type.startsWith('recovery') ? 'recovery' : section.type;
+  const typeClass = section.type === 'glute' ? 'core' : section.type === 'power' ? 'hiit' : section.type.startsWith('recovery') ? 'recovery' : section.type;
   let html = `<div class="card card-${typeClass}">`;
   html += `<div class="card-label label-${typeClass}">${section.label}</div>`;
 
@@ -2178,10 +2381,17 @@ function renderSection(section, si) {
   }
 
   else if (section.type === 'strength') {
-    html += `<div class="card-title">${section.mainLift} ${section.deload ? '<span class="deload-badge">DELOAD WEEK</span>' : ''}</div>`;
+    const phaseBadgeColor = section.phaseKey === 'deload' ? 'recovery' : section.phaseKey === 'benchmark' ? 'core' : 'strength';
+    html += `<div class="card-title">${section.mainLift} <span class="deload-badge" style="background:rgba(127,119,221,0.15);color:var(--${phaseBadgeColor});">${section.phaseLabel || ''}</span></div>`;
     html += `<div class="card-meta">${section.format} — ${section.reps} reps/round — Build Each Round</div>`;
-    if (section.deload) {
-      html += `<div style="font-size:12px;color:var(--recovery);margin-bottom:8px;">Lighter on purpose — recovery is where the gains land. Back to full load next cycle.</div>`;
+    if (section.phaseNote) {
+      html += `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${section.phaseNote}</div>`;
+    }
+    if (section.tempoNote) {
+      html += `<div style="font-size:12px;color:var(--core);margin-bottom:8px;">⏱ ${section.tempoNote}</div>`;
+    }
+    if (CUES[section.mainLift]) {
+      html += `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-style:italic;">💡 ${CUES[section.mainLift]}</div>`;
     }
     if (section.autoRegulated) {
       html += `<div style="font-size:12px;color:var(--caution);margin-bottom:8px;">Auto-regulated −7.5% after last session's fails. A clean session resets it.</div>`;
@@ -2191,7 +2401,11 @@ function renderSection(section, si) {
     }
 
     if (section.herniaMode) {
-      html += `<div style="margin-bottom:8px;"><span style="font-size:12px;color:var(--caution);">RPE Cap: 7 — Focus on form &amp; midline stability</span></div>`;
+      const rules = herniaPhaseRules(settings);
+      html += `<div style="margin-bottom:8px;"><span style="font-size:12px;color:var(--caution);">${rules.rpeNote}</span></div>`;
+      if (section.herniaFlags.length > 0) {
+        html += `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">⚠ ${HERNIA_CUE}</div>`;
+      }
     }
 
     html += '<table class="weight-table"><thead><tr><th>Round</th><th>Weight (lb)</th><th>%</th></tr></thead><tbody>';
@@ -2228,7 +2442,22 @@ function renderSection(section, si) {
   else if (section.type === 'core') {
     html += `<div class="card-meta">${section.format}</div>`;
     html += exListHtml(section, si);
-    html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
+    if (section.coreAmrap) {
+      html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('amrap', ${section.duration}, 0, 0, 0, ${si})">START 5 MIN TIMER</button></div>`;
+    } else {
+      html += `<div style="margin-top:12px"><button class="btn btn-core btn-sm" onclick="openTimerConfig('interval', ${section.work}, ${section.rest}, ${section.rounds}, ${section.exercises.length}, ${si})">START TIMER</button></div>`;
+    }
+  }
+
+  else if (section.type === 'power') {
+    html += `<div class="card-meta">${section.format}</div>`;
+    const move = section.exercises[0];
+    html += `<div class="card-title" style="font-size:16px;">${move.name}</div>`;
+    if (CUES[move.name]) {
+      html += `<div style="font-size:12px;color:var(--text3);margin:4px 0 8px;font-style:italic;">💡 ${CUES[move.name]}</div>`;
+    }
+    html += `<div style="font-size:12px;color:var(--text2);">${section.powerNote}</div>`;
+    html += `<div style="margin-top:10px;"><button class="ex-swap" onclick="swapExercise(${si},0)" title="Swap">⇄ swap movement</button></div>`;
   }
 
   else if (section.type === 'metcon') {
@@ -2245,6 +2474,9 @@ function renderSection(section, si) {
   }
 
   else if (section.type === 'strengthcon') {
+    if (section.wodName) {
+      html += `<div class="card-title" style="font-size:15px;">"${section.wodName}"</div>`;
+    }
     html += `<div class="card-meta">${section.format}</div>`;
     html += exListHtml(section, si, (e) => (section.herniaMode && isHerniaFlagged(e.name, e.pct || 0, settings)) ? '<span class="caution-badge">CAUTION</span>' : '');
     html += `<div style="margin-top:12px"><button class="btn btn-strengthcon btn-sm" onclick="openTimerConfig('forTime', ${section.cap}, 0, ${section.rounds}, 0, ${si})">START TIMER</button></div>`;
@@ -2293,9 +2525,18 @@ let timerState = null;
 let timerInterval = null;
 let audioCtx = null;
 let timerExercises = []; // [{name, reps}] for current timer section
+let timerCfgTargetRounds = 0; // "X RDS for time" target for the lap counter
+
+function timerSoundMode() {
+  return getSettings().timerSound || 'beep';
+}
 
 function getAudioCtx() {
+  if (timerSoundMode() !== 'beep') return null; // vibrate/silent: never touch the audio system
   if (!audioCtx) {
+    // iOS 17+ Audio Session API: 'ambient' mixes our beeps WITH music
+    // (Spotify/Apple Music keep playing) instead of interrupting it.
+    try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch(e) {}
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
   if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -2303,8 +2544,10 @@ function getAudioCtx() {
 }
 
 function playBeep(freq, duration, type) {
+  if (timerSoundMode() !== 'beep') return;
   try {
     const ctx = getAudioCtx();
+    if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type || 'sine';
@@ -2338,6 +2581,7 @@ function playCountdownBeep() {
 }
 
 function vibrate(pattern) {
+  if (timerSoundMode() === 'silent') return;
   if (navigator.vibrate) {
     try { navigator.vibrate(pattern); } catch(e) {}
   }
@@ -2346,6 +2590,9 @@ function vibrate(pattern) {
 function openTimerConfig(mode, param1, param2, param3, param4, sectionIdx) {
   // Initialize audio context on first user interaction
   getAudioCtx();
+
+  // Target rounds for lap-counted modes (forTime "X RDS", AMRAP goal)
+  timerCfgTargetRounds = (mode === 'forTime') ? (param3 || 0) : 0;
 
   // Grab exercises from the current WOD section
   timerExercises = [];
@@ -2482,6 +2729,7 @@ function startAmrapTimer() {
     mode: 'amrap',
     totalTime: mins * 60,
     elapsed: 0,
+    roundsDone: 0,
     phase: 'getReady',
     secondsLeft: 10,
     totalSeconds: 10,
@@ -2501,6 +2749,9 @@ function startForTimeTimer() {
     mode: 'forTime',
     cap: capMins * 60,
     elapsed: 0,
+    roundsDone: 0,
+    targetRounds: timerCfgTargetRounds || 0,
+    finalTime: 0,
     phase: 'getReady',
     secondsLeft: 10,
     totalSeconds: 10,
@@ -2699,12 +2950,16 @@ function updateTimerDisplay() {
   if (s.finished) {
     phaseEl.textContent = 'DONE';
     phaseEl.className = 'timer-phase work';
-    digitsEl.textContent = '0:00';
+    digitsEl.textContent = s.finalTime > 0 ? formatTime(s.finalTime) : '0:00';
     digitsEl.style.color = 'var(--success)';
-    roundEl.textContent = 'Workout Complete!';
+    roundEl.textContent = s.finalTime > 0
+      ? `Finished — ${s.targetRounds} rounds in ${formatTime(s.finalTime)}`
+      : (s.mode === 'amrap' && s.roundsDone > 0 ? `Time! ${s.roundsDone} rounds completed` : 'Workout Complete!');
     infoEl.textContent = '';
     progressBar.style.width = '100%';
     progressBar.style.background = 'var(--success)';
+    const lw = document.getElementById('timer-lap-wrap');
+    if (lw) lw.style.display = 'none';
     return;
   }
 
@@ -2749,8 +3004,8 @@ function updateTimerDisplay() {
     phaseEl.className = 'timer-phase work';
     const remaining = s.totalTime - s.elapsed;
     digitsEl.textContent = formatTime(remaining);
-    roundEl.textContent = `${formatTime(s.elapsed)} elapsed`;
-    infoEl.textContent = '';
+    roundEl.textContent = `Rounds done: ${s.roundsDone || 0}`;
+    infoEl.textContent = `${formatTime(s.elapsed)} elapsed — tap ✓ each round`;
     const pct = (s.elapsed / s.totalTime) * 100;
     progressBar.style.width = pct + '%';
     progressBar.style.background = 'var(--metcon)';
@@ -2759,11 +3014,23 @@ function updateTimerDisplay() {
     phaseEl.textContent = 'FOR TIME';
     phaseEl.className = 'timer-phase work';
     digitsEl.textContent = formatTime(s.elapsed);
-    roundEl.textContent = `Cap: ${formatTime(s.cap)}`;
-    infoEl.textContent = '';
+    if (s.targetRounds > 0) {
+      roundEl.textContent = `Round ${Math.min((s.roundsDone || 0) + 1, s.targetRounds)} / ${s.targetRounds}`;
+      infoEl.textContent = `Cap: ${formatTime(s.cap)} — tap ✓ each round`;
+    } else {
+      roundEl.textContent = `Cap: ${formatTime(s.cap)}`;
+      infoEl.textContent = '';
+    }
     const pct = (s.elapsed / s.cap) * 100;
     progressBar.style.width = pct + '%';
     progressBar.style.background = 'var(--metcon)';
+  }
+
+  // Lap button: only for user-paced modes, only while running
+  const lapWrap = document.getElementById('timer-lap-wrap');
+  if (lapWrap) {
+    const lappable = (s.mode === 'amrap' || (s.mode === 'forTime' && s.targetRounds > 0));
+    lapWrap.style.display = (lappable && s.phase !== 'getReady' && !s.finished) ? '' : 'none';
   }
 
   // --- Exercise display ---
@@ -2810,6 +3077,22 @@ function updateTimerDisplay() {
     exRepEl.textContent = '';
     exListEl.innerHTML = '';
   }
+}
+
+// Lap counter for user-paced modes (forTime rounds, AMRAP rounds)
+function markRoundDone() {
+  const s = timerState;
+  if (!s || s.finished || s.phase === 'getReady') return;
+  s.roundsDone = (s.roundsDone || 0) + 1;
+  vibrate(50);
+  playWorkBeep();
+  if (s.mode === 'forTime' && s.targetRounds > 0 && s.roundsDone >= s.targetRounds) {
+    s.finalTime = s.elapsed;
+    s.finished = true;
+    playFinishBeep();
+    vibrate([100, 50, 100, 50, 200]);
+  }
+  updateTimerDisplay();
 }
 
 function toggleTimerPause() {
@@ -3058,8 +3341,9 @@ function logCurrentWorkout() {
     log = buildLogFromWod(currentWod);
   }
 
-  // Check all exercises as completed
-  log.exercises.forEach(e => e.checked = true);
+  // Check all exercises as completed — except optional Z2 flush cardio,
+  // which only counts if done deliberately (check it in the Log view)
+  log.exercises.forEach(e => { e.checked = !(e.isCardio && log.dayType !== 'recovery'); });
   saveCurrentLog(log);
 
   const entry = persistLogEntry(log);
@@ -3278,6 +3562,7 @@ function resetStationWeight(si, ei) {
 function swapPoolFor(sectionType) {
   const settings = getSettings();
   const eq = settings.equipment;
+  if (sectionType === 'power') return POWER_MOVES.map(m => m.name);
   if (sectionType === 'warmup') return WARMUP_DYNAMIC.slice();
   if (sectionType === 'recovery-warmup') return RECOVERY_MOBILITY.slice();
   if (sectionType === 'core') return filterForEquipment(EXERCISES.core, eq);
@@ -3306,6 +3591,16 @@ function swapExercise(si, ei) {
 
   const oldName = ex.name;
   ex.name = candidates[Math.floor(Math.random() * candidates.length)];
+
+  // Power section: swap the whole prescription, not just the name
+  if (section.type === 'power') {
+    const move = POWER_MOVES.find(m => m.name === ex.name);
+    if (move) {
+      ex.reps = move.rx;
+      section.format = move.rx + ' — FULL rest between sets';
+    }
+  }
+
   saveCurrentWod(currentWod);
 
   // Keep an in-progress log in sync
@@ -3379,10 +3674,13 @@ function saveLog() {
 // POST-WORKOUT SUMMARY — the moment that builds the habit
 // ============================================================
 
+let summaryEntryKey = null;
+
 function showWorkoutSummary(entry) {
   const history = getHistory();
   const settings = getSettings();
   const el = document.getElementById('summary-content');
+  summaryEntryKey = { date: entry.date, dayType: entry.dayType };
 
   const checked = entry.exercises.filter(e => e.checked);
   const totalSets = entry.exercises.length;
@@ -3440,7 +3738,16 @@ function showWorkoutSummary(entry) {
       </div>
       ${priorBest > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);padding:4px 0;"><span>Previous best</span><span style="font-weight:600;">${priorBest} lb ${isPR ? `<span style="color:var(--success);">+${todayE1 - priorBest}</span>` : ''}</span></div>` : ''}
       ${firstBench ? `<div style="font-size:12px;color:var(--text3);padding:4px 0;">First tracked session — this is your benchmark.</div>` : ''}
-      ${key && stored > 0 && todayE1 > stored ? `<button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" id="update-1rm-${key}" onclick="applyOneRMUpdate('${key}', ${todayE1}, '${lift.replace(/'/g, "\\'")}')">UPDATE 1RM: ${stored} → ${todayE1} LB</button>` : ''}
+      ${(() => {
+        // Training-max model: updates capped at +2.5% per session so one
+        // enthusiastic day can't inflate next month's percentages
+        if (!key || stored <= 0 || todayE1 <= stored) return '';
+        const suggested = Math.min(roundTo5(todayE1), roundTo5(stored * 1.025));
+        if (suggested <= stored) return '';
+        const capped = suggested < todayE1;
+        return `<button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" id="update-1rm-${key}" onclick="applyOneRMUpdate('${key}', ${suggested}, '${lift.replace(/'/g, "\\'")}')">UPDATE 1RM: ${stored} → ${suggested} LB</button>` +
+          (capped ? `<div style="font-size:11px;color:var(--text3);margin-top:4px;text-align:center;">Capped at +2.5%/session — steady beats spiky. Benchmark days re-validate the rest.</div>` : '');
+      })()}
     </div>`;
   });
 
@@ -3450,10 +3757,23 @@ function showWorkoutSummary(entry) {
     <div class="week-goals" style="margin-top:0;">
       <div class="week-goal ${stats.active >= 3 ? 'hit' : ''}"><div class="week-goal-dot"></div>${stats.active}/3 Active</div>
       <div class="week-goal ${stats.intense >= 3 ? 'hit' : ''}"><div class="week-goal-dot"></div>${stats.intense}/3 Intense</div>
-      <div class="week-goal ${stats.z2 >= 90 ? 'hit' : ''}"><div class="week-goal-dot"></div>${stats.z2}/90 Z2</div>
+      <div class="week-goal ${stats.z2 >= (settings.z2Target || 90) ? 'hit' : ''}"><div class="week-goal-dot"></div>${stats.z2}/${settings.z2Target || 90} Z2</div>
     </div>
     ${stats.active === 2 ? '<div style="font-size:12px;color:var(--text2);margin-top:8px;">One more and the week is yours.</div>' : ''}
     ${stats.active >= 3 && stats.intense >= 3 ? '<div style="font-size:12px;color:var(--success);margin-top:8px;">Week goals hit. This is just what you do now.</div>' : ''}
+  </div>`;
+
+  // Pain check — the most important datapoint after "did you show up".
+  // Feeds hernia-phase progression and future exercise exclusions.
+  html += `<div class="summary-card" style="border-left-color:var(--recovery);">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">Body Check</div>
+    <div style="font-size:13px;color:var(--text2);">Any pain or pull today (hernia site or otherwise)?</div>
+    <div class="plan-chips" id="pain-chips">
+      <button class="plan-chip" onclick="recordPain('none', this)">✓ None</button>
+      <button class="plan-chip" onclick="recordPain('twinge', this)">Twinge</button>
+      <button class="plan-chip" onclick="recordPain('pain', this)">Real Pain</button>
+    </div>
+    <div id="pain-feedback" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
   </div>`;
 
   // Implementation intention: lock in the next session while motivation is high
@@ -3472,6 +3792,45 @@ function showWorkoutSummary(entry) {
   el.innerHTML = html;
   document.getElementById('summary-overlay').classList.add('active');
   document.getElementById('summary-overlay').scrollTop = 0;
+}
+
+// Pain logging → hernia-phase progression (graded exposure, not guesswork)
+function recordPain(level, btn) {
+  if (!summaryEntryKey) return;
+
+  const history = getHistory();
+  const entry = history.find(h => h.date === summaryEntryKey.date && h.dayType === summaryEntryKey.dayType);
+  if (entry) {
+    entry.painLevel = level;
+    saveHistory(history);
+  }
+
+  document.querySelectorAll('#pain-chips .plan-chip').forEach(b => b.classList.remove('selected'));
+  if (btn) btn.classList.add('selected');
+
+  const s = getSettings();
+  const fb = document.getElementById('pain-feedback');
+  const CLEAN_TARGET = 8;
+
+  if (level === 'none') {
+    if (s.herniaMode && (s.herniaPhase || 1) < 3) {
+      s.herniaCleanCount = (s.herniaCleanCount || 0) + 1;
+      if (s.herniaCleanCount >= CLEAN_TARGET) {
+        if (fb) fb.innerHTML = `<span style="color:var(--success);">${s.herniaCleanCount} clean sessions — you're eligible for Hernia Phase ${(s.herniaPhase || 1) + 1}. Advance it in Settings (worth a quick OK from your doctor first).</span>`;
+      } else {
+        if (fb) fb.textContent = `Clean session ${s.herniaCleanCount}/${CLEAN_TARGET} toward Phase ${(s.herniaPhase || 1) + 1}.`;
+      }
+    } else {
+      if (fb) fb.textContent = 'Noted — all clear.';
+    }
+  } else if (level === 'twinge') {
+    if (fb) fb.textContent = 'Noted. A twinge is information, not a verdict — watch it next session, and swap anything that provokes it.';
+  } else {
+    if (s.herniaMode) s.herniaCleanCount = 0;
+    if (fb) fb.innerHTML = '<span style="color:var(--caution);">Logged. Back off the aggravating movement, and if this repeats or worsens, get it checked before loading again.</span>';
+  }
+  saveSettings(s);
+  syncToGitHub(true);
 }
 
 function planNext(daysAhead, time, focus, btn) {
@@ -3782,9 +4141,43 @@ function renderSettings() {
       <div class="setting-row">
         <div>
           <div class="setting-label">Hernia Recovery Mode</div>
-          <div class="setting-sublabel">RPE cap at 7, flags heavy movements</div>
+          <div class="setting-sublabel">Graded exposure — flags & caps by phase</div>
         </div>
         <button class="toggle ${s.herniaMode ? 'on' : ''}" onclick="toggleHerniaMode()"></button>
+      </div>
+      ${s.herniaMode ? `
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Recovery Phase</div>
+          <div class="setting-sublabel">${(s.herniaPhase || 1) < 3 ? `Clean sessions: ${s.herniaCleanCount || 0}/8 toward Phase ${(s.herniaPhase || 1) + 1}` : 'Monitoring only — full loading'}</div>
+        </div>
+        <div class="segment" style="width:auto;">
+          ${[1,2,3].map(p => `<button class="segment-btn ${(s.herniaPhase || 1) === p ? 'active' : ''}" onclick="setHerniaPhase(${p})" style="padding:8px 12px;">${p}</button>`).join('')}
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">P1: RPE 7, loads ≤78%, DL flagged >75% · P2: RPE 8, ≤84%, DL flagged >82% · P3: monitoring. Advance phases with your physician's OK.</div>
+      ` : ''}
+      <div class="setting-row" style="margin-top:6px;">
+        <div>
+          <div class="setting-label">Weekly Zone 2 Target</div>
+          <div class="setting-sublabel">Guideline floor is 150 min/wk — work up to it</div>
+        </div>
+        <div class="segment" style="width:auto;">
+          ${[90,120,150].map(t => `<button class="segment-btn ${(s.z2Target || 90) === t ? 'active' : ''}" onclick="setZ2Target(${t})" style="padding:8px 10px;">${t}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-group-title">Timer</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Timer Sound</div>
+          <div class="setting-sublabel">Beeps mix with music on iOS 17+; Vibrate never touches audio</div>
+        </div>
+        <div class="segment" style="width:auto;">
+          ${[['beep','Beep'],['vibrate','Vibrate'],['silent','Silent']].map(([v,l]) => `<button class="segment-btn ${(s.timerSound || 'beep') === v ? 'active' : ''}" onclick="setTimerSound('${v}')" style="padding:8px 10px;">${l}</button>`).join('')}
+        </div>
       </div>
     </div>
 
@@ -3825,6 +4218,10 @@ function renderSettings() {
         <span class="setting-label">Workout History</span>
         <span style="color:var(--text3);font-size:14px;">${getHistory().length} workouts</span>
       </div>
+      <div class="setting-row">
+        <span class="setting-label">Last Backup</span>
+        <span style="color:${backupOverdue() ? 'var(--caution)' : 'var(--text3)'};font-size:14px;">${s.lastBackup || 'Never'}${backupOverdue() ? ' — export one!' : ''}</span>
+      </div>
       <div style="margin-top:12px;display:flex;gap:8px;">
         <button class="btn btn-ghost btn-sm" onclick="exportData()" style="flex:1;">Export JSON</button>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()" style="flex:1;">Import JSON</button>
@@ -3835,8 +4232,18 @@ function renderSettings() {
       </div>
     </div>
 
+    <div class="setting-group">
+      <div class="setting-group-title">About</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.5;">
+        FitBy50 is a personal training log and workout generator — not medical advice.
+        Consult a physician before starting or changing an exercise program, especially
+        when training through injury recovery. Hernia-mode phases are a self-management
+        aid; progress them with professional guidance. Stop any movement that causes pain.
+      </div>
+    </div>
+
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.6.3
+      FitBy50 v1.7.0 · Programming inspired by Blue Lion Fitness
     </div>
   `;
 }
@@ -3880,6 +4287,37 @@ function toggleHerniaMode() {
   renderSettings();
 }
 
+function setHerniaPhase(p) {
+  const s = getSettings();
+  s.herniaPhase = p;
+  s.herniaCleanCount = 0;
+  saveSettings(s);
+  localStorage.removeItem(STORAGE_KEYS.currentWod);
+  localStorage.removeItem(STORAGE_KEYS.currentLog);
+  renderSettings();
+  showToast('Hernia recovery: Phase ' + p);
+}
+
+function setZ2Target(t) {
+  const s = getSettings();
+  s.z2Target = t;
+  saveSettings(s);
+  renderSettings();
+  showToast('Weekly Zone 2 target: ' + t + ' min');
+}
+
+function setTimerSound(mode) {
+  const s = getSettings();
+  s.timerSound = mode;
+  saveSettings(s);
+  if (mode !== 'beep' && audioCtx) {
+    try { audioCtx.close(); } catch(e) {}
+    audioCtx = null; // release the audio session so music is untouched
+  }
+  renderSettings();
+  showToast('Timer: ' + (mode === 'beep' ? 'beeps + vibration' : mode === 'vibrate' ? 'vibration only' : 'silent'));
+}
+
 function setRotation(idx) {
   setRotationIndex(idx);
   localStorage.removeItem(STORAGE_KEYS.currentWod);
@@ -3905,6 +4343,9 @@ function closeConfirm(result) {
   document.getElementById('confirm-overlay').classList.remove('active');
   if (confirmCallback) confirmCallback(result);
   confirmCallback = null;
+  // Restore default button styling (the disclaimer relabels it)
+  const okBtn = document.getElementById('confirm-ok');
+  if (okBtn) { okBtn.textContent = 'Confirm'; okBtn.className = 'btn btn-danger btn-sm'; }
 }
 
 function confirmReset() {
@@ -3921,7 +4362,18 @@ function confirmReset() {
 // EXPORT / IMPORT
 // ============================================================
 
+function backupOverdue() {
+  const s = getSettings();
+  if (getHistory().length < 5) return false;
+  if (!s.lastBackup) return true;
+  const last = new Date(s.lastBackup + 'T12:00:00');
+  return (new Date() - last) > 30 * 86400000;
+}
+
 function exportData() {
+  const s0 = getSettings();
+  s0.lastBackup = todayStr();
+  saveSettings(s0);
   const data = {
     settings: getSettings(),
     history: getHistory(),
@@ -3982,6 +4434,11 @@ function importData(input) {
 // TOAST
 // ============================================================
 
+function showCue(name) {
+  const cue = CUES[name];
+  if (cue) showToast('💡 ' + cue);
+}
+
 function showToast(msg) {
   let toast = document.getElementById('toast');
   if (!toast) {
@@ -4041,6 +4498,22 @@ async function init() {
   // move from GitHub Pages to a custom domain)
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  // One-time disclaimer acknowledgment
+  if (!localStorage.getItem(STORAGE_KEYS.disclaimerAck)) {
+    showConfirm(
+      'Before you train',
+      'FitBy50 is a personal training log, not medical advice. Consult a physician before starting or changing an exercise program — especially when training through injury recovery. Stop any movement that causes pain.',
+      () => { localStorage.setItem(STORAGE_KEYS.disclaimerAck, '1'); }
+    );
+    const okBtn = document.getElementById('confirm-ok');
+    if (okBtn) { okBtn.textContent = 'Got it'; okBtn.className = 'btn btn-primary btn-sm'; }
+  }
+
+  // Monthly backup nudge
+  if (backupOverdue()) {
+    setTimeout(() => showToast('📦 It\'s been a while — export a backup in Settings'), 2500);
   }
 }
 
