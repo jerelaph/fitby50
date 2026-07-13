@@ -1732,10 +1732,10 @@ function generateWarmup(liftCategory, rng) {
   };
 }
 
-function generateStrength(rotIdx, settings, rng) {
+function generateStrength(rotIdx, settings, rng, forceLift) {
   const liftCat = LIFT_ROTATION[rotIdx];
   const lifts = PRIMARY_LIFTS[liftCat];
-  const mainLift = lifts[Math.floor(rng() * lifts.length)];
+  const mainLift = (forceLift && lifts.includes(forceLift)) ? forceLift : lifts[Math.floor(rng() * lifts.length)];
   const format = weightedPick(STRENGTH_FORMATS, rng);
   const rx = LOADING_RX[mainLift];
   const oneRMKey = rx ? rx.oneRMKey : null;
@@ -2405,7 +2405,8 @@ function renderSection(section, si) {
 
   else if (section.type === 'strength') {
     const phaseBadgeColor = section.phaseKey === 'deload' ? 'recovery' : section.phaseKey === 'benchmark' ? 'core' : 'strength';
-    html += `<div class="card-title">${section.mainLift} <span class="deload-badge" style="background:rgba(127,119,221,0.15);color:var(--${phaseBadgeColor});">${section.phaseLabel || ''}</span></div>`;
+    const hasVariants = (PRIMARY_LIFTS[section.liftCategory] || []).length > 1;
+    html += `<div class="card-title">${section.mainLift} ${hasVariants ? `<button class="ex-swap" onclick="swapMainLift(${si})" title="Same focus, different lift">⇄</button>` : ''} <span class="deload-badge" style="background:rgba(127,119,221,0.15);color:var(--${phaseBadgeColor});">${section.phaseLabel || ''}</span></div>`;
     html += `<div class="card-meta">${section.format} — ${section.reps} reps/round — Build Each Round</div>`;
     if (section.phaseNote) {
       html += `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${section.phaseNote}</div>`;
@@ -3545,6 +3546,33 @@ function syncLogRoundWeight(section, i) {
   }
 }
 
+// Same focus, different lift: Front Squat → Back/Box Squat, etc.
+// Rebuilds the strength section with the same phase/deload/autoregulation logic.
+function swapMainLift(si) {
+  if (!currentWod || !currentWod.sections[si] || currentWod.sections[si].type !== 'strength') return;
+  const section = currentWod.sections[si];
+  const variants = (PRIMARY_LIFTS[section.liftCategory] || []).filter(n => n !== section.mainLift);
+  if (variants.length === 0) { showToast('No variant available'); return; }
+
+  const newLift = variants[Math.floor(Math.random() * variants.length)];
+  const settings = getSettings();
+  const rng = mulberry32(Math.floor(Math.random() * 1e9));
+  const fresh = generateStrength(currentWod.rotationIndex, settings, rng, newLift);
+
+  // Respect an active low-readiness scaling
+  if (currentWod.scaled) {
+    fresh.weights = fresh.weights.map(w => ({ pct: w.pct, weight: roundTo5(w.weight * 0.9) }));
+  }
+
+  const oldLift = section.mainLift;
+  currentWod.sections[si] = fresh;
+  saveCurrentWod(currentWod);
+  // The round structure may have changed — rebuild the log from the WOD
+  localStorage.removeItem(STORAGE_KEYS.currentLog);
+  renderWodContent(currentWod);
+  showToast(`${oldLift} → ${newLift}`);
+}
+
 // Strengthcon barbell station load
 function bumpStationWeight(si, ei, delta) {
   if (!currentWod || !currentWod.sections[si] || !currentWod.sections[si].exercises) return;
@@ -4279,7 +4307,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:24px;color:var(--text3);font-size:12px;">
-      FitBy50 v1.7.3 · Programming inspired by Blue Lion Fitness
+      FitBy50 v1.7.4 · Programming inspired by Blue Lion Fitness
     </div>
   `;
 }
